@@ -95,11 +95,15 @@ FUENTES_ABURRA = [
 ]
 
 def configurar_webhook_automatico():
-    print("--- INICIANDO VERIFICACIÓN DE WEBHOOK ---")
+    print("--- DIAGNOSTICO DE TOKEN ---")
     if not TELEGRAM_TOKEN:
-        print("-> ALERTA CRÍTICA: TELEGRAM_TOKEN no está configurado en Render (Environment). Revisa el panel.")
+        print("-> [ERROR FATAL] TELEGRAM_TOKEN está VACÍO o no existe en el entorno de Render.")
         return
     
+    # Imprime los primeros 5 caracteres y la longitud para verificar sin comprometer seguridad
+    token_parcial = TELEGRAM_TOKEN[:5] + "..." if len(TELEGRAM_TOKEN) > 5 else "MUY CORTO"
+    print(f"-> TOKEN DETECTADO: {token_parcial} (Longitud: {len(TELEGRAM_TOKEN)})")
+
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
     try:
         res = requests.get(url, timeout=5)
@@ -107,7 +111,7 @@ def configurar_webhook_automatico():
     except Exception as e:
         print(f"-> Error autoconfigurando webhook: {e}")
 
-# Autoconfiguración al importar/iniciar
+# Ejecutar al iniciar
 configurar_webhook_automatico()
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
@@ -185,4 +189,3 @@ def webhook():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-                                                    
