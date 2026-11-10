@@ -8,3 +8,42 @@ app = Flask(__name__)
 PORT = int(os.environ.get("PORT", "10000"))
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "9084832898:AAGQCqGvBrtNRy9kQ34QnLlrSYUUEBsG7x8")
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
+
+def enviar_mensaje(chat_id, texto):
+    url = f"{TELEGRAM_API_URL}/sendMessage"
+    payload = {"chat_id": chat_id, "text": texto}
+    try:
+        requests.post(url, json=payload)
+    except Exception as e:
+        print(f"Error enviando mensaje: {e}")
+
+@app.route("/")
+def home():
+    total_fuentes = len(BASE_DATOS_AZULES)
+    total_valle = len(VALLE_ABURRA)
+    return f"KITT-BOT is online and operational! Fuentes cargadas: {total_fuentes} | Filtros Valle: {total_valle}", 200
+
+@app.route("/webhook", methods=["POST"])
+def telegram_webhook():
+    data = request.get_json()
+    if data and "message" in data:
+        message = data["message"]
+        chat_id = message["chat"].get("id")
+        texto_usuario = message.get("text", "")
+
+        if texto_usuario.startswith("/start"):
+            respuesta = (
+                "¡Hola, Raúl! KITT-BOT en línea.\n"
+                f"📊 Fuentes cargadas: {len(BASE_DATOS_AZULES)}\n"
+                f"📍 Filtros Valle de Aburrá: {len(VALLE_ABURRA)}\n"
+                "Listo para monitorear la movilidad y datos."
+            )
+        else:
+            respuesta = f"KITT-BOT recibió tu reporte: '{texto_usuario}'. Procesando con los datos activos..."
+
+        enviar_mensaje(chat_id, respuesta)
+
+    return "OK", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=PORT)
