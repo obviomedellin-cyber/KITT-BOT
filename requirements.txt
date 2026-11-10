@@ -1,7 +1,2 @@
-flask
-requests
-pytz
-beautifulsoup4
-lxml
-apscheduler
-
+Flask==3.0.2
+requests==2.31.0
