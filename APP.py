@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from bs4 import BeautifulSoup
@@ -100,7 +99,7 @@ def esta_en_ventana_operativa():
   elif dia_semana == 6:
     if 17.0 <= hora_decimal <= 24.0:
       return True
-  # Lunes a Jueves (0 a 3): 1:00 p.m. (13:00) a 10:00 p.m. (22:00)
+    # Lunes a Jueves (0 a 3): 1:00 p.m. (13:00) a 10:00 p.m. (22:00)
   elif 0 <= dia_semana <= 3:
     if 13.0 <= hora_decimal <= 22.0:
       return True
@@ -108,30 +107,21 @@ def esta_en_ventana_operativa():
   return False
 
 
-async def extraer_nitter(session, cuenta):
-  url = f"https://nitter.privacydev.net/{cuenta}"
-  hallazgos = []
-  try:
-    async with session.get(url, timeout=3) as resp:
-      if resp.status == 200:
-        html = await resp.text()
-        soup = BeautifulSoup(html, "html.parser")
-        for tweet in soup.select(".tweet-content")[:2]:
-          texto = tweet.get_text(strip=True)
-          if any(f.lower() in texto.lower() for f in FILTROS_VALLE_52):
-            hallazgos.append(f"📱 **@{cuenta}**: {texto}")
-  except Exception:
-    pass
-  return hallazgos
+def realizar_barrido_sincrono():
+  """Ejecución síncrona robusta para evitar bloqueos de bucle en Render."""
+  global NOVEDADES_CACHE
+  if not esta_en_ventana_operativa():
+    return
 
-
-async def extraer_rss(session, url_rss):
   hallazgos = []
-  try:
-    async with session.get(url_rss, timeout=3) as resp:
-      if resp.status == 200:
-        xml = await resp.text()
-        soup = BeautifulSoup(xml, "xml")
+  headers = {"User-Agent": "Mozilla/5.0"}
+
+  # Barrido rápido de Fuentes RSS locales (ej. Minuto30 / Alerta Paisa)
+  for url_rss in FEEDS_RSS_LOCALES:
+    try:
+      resp = requests.get(url_rss, headers=headers, timeout=3)
+      if resp.status_code == 200:
+        soup = BeautifulSoup(resp.content, "xml")
         for item in soup.find_all("item")[:3]:
           titulo = (
               item.find("title").get_text(strip=True)
@@ -140,74 +130,36 @@ async def extraer_rss(session, url_rss):
           )
           if any(f.lower() in titulo.lower() for f in FILTROS_VALLE_52):
             hallazgos.append(f"📰 **Medios**: {titulo}")
-  except Exception:
-    pass
-  return hallazgos
+    except Exception:
+      pass
 
+  # Barrido de Cuentas oficiales a través de Nitter
+  for cuenta in CUENTAS_X_OFICIALES:
+    try:
+      url = f"https://nitter.privacydev.net/{cuenta}"
+      resp = requests.get(url, headers=headers, timeout=3)
+      if resp.status_code == 200:
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tweet in soup.select(".tweet-content")[:2]:
+          texto = tweet.get_text(strip=True)
+          if any(f.lower() in texto.lower() for f in FILTROS_VALLE_52):
+            hallazgos.append(f"📱 **@{cuenta}**: {texto}")
+    except Exception:
+      pass
 
-async def extraer_siata(session):
-  hallazgos = []
-  try:
-    async with session.get(
-        "https://siata.gov.co/api/v1/alertas", timeout=3
-    ) as resp:
-      if resp.status == 200:
-        data = await resp.json()
-        for item in data:
-          if item.get("nivel") in ["Rojo", "Naranja"]:
-            hallazgos.append(
-                f"🌧️ **SIATA ({item.get('municipio', 'Valle')})**: "
-                f"{item.get('descripcion')}"
-            )
-  except Exception:
-    pass
-  return hallazgos
-
-
-async def ciclo_barrido_total():
-  async with aiohttp.ClientSession() as session:
-    tareas = [extraer_nitter(session, c) for c in CUENTAS_X_OFICIALES]
-    for rss in FEEDS_RSS_LOCALES:
-      tareas.append(extraer_rss(session, rss))
-    tareas.append(extraer_siata(session))
-
-    resultados = await asyncio.gather(*tareas)
-    consolidados = []
-    for grupo in resultados:
-      for item in grupo:
-        if item not in consolidados:
-          consolidados.append(item)
-    return consolidados
-
-
-def tarea_segundo_plano():
-  """Ejecutado por los crons independientes en segundo plano."""
-  global NOVEDADES_CACHE
-  if not esta_en_ventana_operativa():
-    return
-  try:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    NOVEDADES_CACHE = loop.run_until_complete(ciclo_barrido_total())
-  except Exception:
-    pass
+  if hallazgos:
+    NOVEDADES_CACHE = list(set(hallazgos))  # Evitar duplicados
 
 
 # Configurar crons independientes en segundo plano (minutos 15 y 45 de cada hora)
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(
-    tarea_segundo_plano, "cron", minute="15,45", id="cron_independientes"
+    realizar_barrido_sincrono,
+    "cron",
+    minute="15,45",
+    id="cron_independientes",
 )
 scheduler.start()
-
-# Ejecutar un barrido inicial inmediato al arrancar la app si estamos en horario
-if esta_en_ventana_operativa():
-  try:
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    NOVEDADES_CACHE = loop.run_until_complete(ciclo_barrido_total())
-  except Exception:
-    pass
 
 
 @app.route("/webhook", methods=["POST"])
@@ -229,7 +181,6 @@ def webhook():
     requests.post(url_api, json={"chat_id": chat_id, "text": respuesta})
 
   elif texto.upper() == "P" or texto.lower() == "/p":
-    # El comando P consulta de forma inmediata la caché existente por demanda
     if not esta_en_ventana_operativa():
       respuesta = (
           f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
@@ -257,5 +208,3 @@ def webhook():
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
-
-  
