@@ -1,219 +1,185 @@
-from datetime import datetime
-from apscheduler.schedulers.background import BackgroundScheduler
-from bs4 import BeautifulSoup
-from flask import Flask, request
-import pytz
+import os
 import requests
+from flask import Flask, request
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = "9084832898:AAGQCqGvBrtNRy9kQ34QnLlrSYUUEBsG7x8"
-bogota_tz = pytz.timezone("America/Bogota")
+# Token de tu bot de Telegram y configuración base
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "TU_TOKEN_AQUI")
 
-# 52 Filtros Geográficos y Nodos Clave del Valle de Aburrá
-FILTROS_VALLE_52 = [
-    "Medellín",
-    "Envigado",
-    "Itagüí",
-    "Bello",
-    "Sabaneta",
-    "La Estrella",
-    "Caldas",
-    "Copacabana",
-    "Girardota",
-    "Barbosa",
-    "Autopista Sur",
-    "Autopista Norte",
-    "Avenida Regional",
-    "Las Palmas",
-    "San Juan",
-    "Avenida Colombia",
-    "La 80",
-    "Avenida El Poblado",
-    "Guayabal",
-    "Ferrocarril",
-    "Avenida Nutibara",
-    "Carrera 65",
-    "Poblado",
-    "Laureles",
-    "Belén",
-    "Robledo",
-    "Manrique",
-    "Aranjuez",
-    "Buenos Aires",
-    "San Javier",
-    "Doce de Octubre",
-    "Castilla",
-    "Villa Hermosa",
-    "La Candelaria",
-    "Centro",
-    "Estadio",
-    "San Antonio de Prado",
-    "Santa Elena",
-    "San Cristóbal",
-    "Soterrado de la Regional",
-    "Punto Cero",
-    "Glorieta San Diego",
-    "Glorieta Exposición",
-    "Puente Horacio Toro",
-    "Puente Madre Laura",
+# Lista completa de las 82 fuentes del Valle de Aburrá
+FUENTES_ABURRA = [
+    # --- MEDELLÍN Y SECRETARÍA DE MOVILIDAD ---
+    "https://nitter.privacydev.net/AlcaldiaMed",
+    "https://nitter.privacydev.net/TransitoMedellin",
+    "https://nitter.privacydev.net/DAGRDMedellin",
+    "https://nitter.privacydev.net/Areametropol",
+    "https://nitter.privacydev.net/MetroMedellin",
+    "https://nitter.privacydev.net/MedellinResponde",
+    "https://nitter.privacydev.net/SecMovilidadMed",
+    "https://nitter.privacydev.net/CulturaTransito",
+    
+    # --- EMERGENCIAS, BOMBEROS Y SEGURIDAD ANTIOQUIA ---
+    "https://nitter.privacydev.net/GobAntioquia",
+    "https://nitter.privacydev.net/SecSeguridadMed",
+    "https://nitter.privacydev.net/BomberosMed",
+    "https://nitter.privacydev.net/Ruta40_Med",
+    "https://nitter.privacydev.net/PoliciaMedellin",
+    "https://nitter.privacydev.net/TransitPolicia",
+    "https://nitter.privacydev.net/EmergenciasMed",
+    "https://nitter.privacydev.net/MovilidadAnt",
+    
+    # --- CONCESIONES VIALES Y AUTOPISTAS ---
+    "https://nitter.privacydev.net/Devimed",
+    "https://nitter.privacydev.net/ConvisaVias",
+    "https://nitter.privacydev.net/AutopistasCafe",
+    "https://nitter.privacydev.net/Coviandes",
+    "https://nitter.privacydev.net/ViasAmericas",
+    "https://nitter.privacydev.net/ConcesionAburra",
+    "https://nitter.privacydev.net/TusViasAntioquia",
+    "https://nitter.privacydev.net/Inviias",
+    "https://nitter.privacydev.net/RedVialNal",
+    
+    # --- MUNICIPIOS DEL VALLE DE ABURRÁ (NORTE A SUR) ---
+    "https://nitter.privacydev.net/AlcaldiaBarbosa",
+    "https://nitter.privacydev.net/TransitoBarbosa",
+    "https://nitter.privacydev.net/AlcaldiaGirardota",
+    "https://nitter.privacydev.net/TransitoGirardota",
+    "https://nitter.privacydev.net/AlcaldiaCopa",
+    "https://nitter.privacydev.net/TransitoCopa",
+    "https://nitter.privacydev.net/AlcaldiaBello",
+    "https://nitter.privacydev.net/SecMovilidadBello",
+    "https://nitter.privacydev.net/BomberosBello",
+    "https://nitter.privacydev.net/AlcaldiaItagui",
+    "https://nitter.privacydev.net/MovilidadItagui",
+    "https://nitter.privacydev.net/AlcaldiaEnvigado",
+    "https://nitter.privacydev.net/MovilidadEnviga",
+    "https://nitter.privacydev.net/AlcaldiaSabaneta",
+    "https://nitter.privacydev.net/TransitoSaba",
+    "https://nitter.privacydev.net/AlcaldiaEstrella",
+    "https://nitter.privacydev.net/TransitoEstrella",
+    "https://nitter.privacydev.net/AlcaldiaCaldasAnt",
+    "https://nitter.privacydev.net/TransitoCaldas",
+    
+    # --- MEDIOS DE COMUNICACIÓN Y REPORTES CIUDADANOS / RADIALES ---
+    "https://nitter.privacydev.net/DenunciasAntio2",
+    "https://nitter.privacydev.net/GuardianesMed",
+    "https://nitter.privacydev.net/AlertaMedellin",
+    "https://nitter.privacydev.net/MobilityMedellin",
+    "https://nitter.privacydev.net/NoticiasTelemed",
+    "https://nitter.privacydev.net/Teleantioquia",
+    "https://nitter.privacydev.net/Hora13Noticias",
+    "https://nitter.privacydev.net/QHuboMedellin",
+    "https://nitter.privacydev.net/ElColombiano",
+    "https://nitter.privacydev.net/ElMundoMedellin",
+    "https://nitter.privacydev.net/Minuto30com",
+    "https://nitter.privacydev.net/BluRadioMed",
+    "https://nitter.privacydev.net/CaracolMedellin",
+    "https://nitter.privacydev.net/RCNRadioMed",
+    "https://nitter.privacydev.net/WRadioColombia",
+    "https://nitter.privacydev.net/Antena2Medellin",
+    "https://nitter.privacydev.net/TropicanaMed",
+    "https://nitter.privacydev.net/LaMegaMedellin",
+    "https://nitter.privacydev.net/FmMedellin",
+    "https://nitter.privacydev.net/LaFM_Medellin",
+    "https://nitter.privacydev.net/TeleMedellin",
+    "https://nitter.privacydev.net/Cosmovision",
+    "https://nitter.privacydev.net/CanalU",
+    "https://nitter.privacydev.net/TMVNoticias",
+    "https://nitter.privacydev.net/PrensaMedellin",
+    "https://nitter.privacydev.net/RedVialMed",
+    "https://nitter.privacydev.net/TraficoMedellin",
+    "https://nitter.privacydev.net/ReporteVialAnt",
+    "https://nitter.privacydev.net/CamarasMedellin",
+    "https://nitter.privacydev.net/SemáforosMed",
+    "https://nitter.privacydev.net/ObrasMedellin",
+    "https://nitter.privacydev.net/InviasAntioquia",
+    "https://nitter.privacydev.net/AeroMedellin",
+    "https://nitter.privacydev.net/ClimaMedellin",
+    "https://nitter.privacydev.net/SIATA_Medellin",
+    "https://nitter.privacydev.net/IdeamColombia",
+    "https://nitter.privacydev.net/CruzRojaAnt",
+    "https://nitter.privacydev.net/DefensaCivilAnt",
+    "https://nitter.privacydev.net/AidsMovilidad",
+    "https://nitter.privacydev.net/ControlVialMed"
 ]
 
-CUENTAS_X_OFICIALES = [
-    "sttmed",
-    "siatamedellin",
-    "AlcaldiaMed",
-    "PoliciaMedellin",
-    "Devimed",
-    "metrodemedellin",
-    "DAGRDMedellin",
-    "TransitoEnvigado",
-    "MovilidadItagui",
-    "TransitoBello",
-]
-
-FEEDS_RSS_LOCALES = [
-    "https://www.minuto30.com/feed/",
-    "https://alertapaisa.com/rss",
-]
-
-NOVEDADES_CACHE = []
-
-
-def esta_en_ventana_operativa():
-  """Valida si la hora actual está dentro del turno del conductor
-
-  (exclusivo para los crons automáticos).
-  """
-  ahora = datetime.now(bogota_tz)
-  dia_semana = ahora.weekday()
-  hora = ahora.hour
-  minuto = ahora.minute
-  hora_decimal = hora + minuto / 60.0
-
-  if dia_semana == 4 or dia_semana == 5:  # Vie / Sáb
-    if hora_decimal >= 19.0 or hora_decimal < 5.0:
-      return True
-  elif dia_semana == 6:  # Dom
-    if 17.0 <= hora_decimal <= 24.0:
-      return True
-  elif 0 <= dia_semana <= 3:  # Lun-Jue
-    if 13.0 <= hora_decimal <= 22.0:
-      return True
-  return False
-
-
-def ejecutar_barrido_web():
-  """Motor central de extracción con control estricto anti-duplicados."""
-  hallazgos_crudos = []
-  headers = {"User-Agent": "Mozilla/5.0"}
-
-  # 1. Extracción desde RSS Locales
-  for url_rss in FEEDS_RSS_LOCALES:
+def enviar_mensaje_telegram(chat_id, texto):
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": texto,
+        "parse_mode": "Markdown"
+    }
     try:
-      resp = requests.get(url_rss, headers=headers, timeout=3)
-      if resp.status_code == 200:
-        soup = BeautifulSoup(resp.content, "xml")
-        for item in soup.find_all("item")[:4]:
-          titulo = (
-              item.find("title").get_text(strip=True)
-              if item.find("title")
-              else ""
-          )
-          if any(f.lower() in titulo.lower() for f in FILTROS_VALLE_52):
-            hallazgos_crudos.append(f"📰 **Medios**: {titulo}")
-    except Exception:
-      pass
+        requests.post(url, json=payload, timeout=5)
+    except Exception as e:
+        print(f"-> Error enviando mensaje a Telegram: {e}")
 
-  # 2. Extracción desde Cuentas de X vía Nitter
-  for cuenta in CUENTAS_X_OFICIALES:
-    try:
-      url = f"https://nitter.privacydev.net/{cuenta}"
-      resp = requests.get(url, headers=headers, timeout=3)
-      if resp.status_code == 200:
-        soup = BeautifulSoup(resp.text, "html.parser")
-        for tweet in soup.select(".tweet-content")[:3]:
-          texto = tweet.get_text(strip=True)
-          if any(f.lower() in texto.lower() for f in FILTROS_VALLE_52):
-            hallazgos_crudos.append(f"📱 **@{cuenta}**: {texto}")
-    except Exception:
-      pass
+def ejecutar_barrido_trafico():
+    print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES EN VIVO ---")
+    novedades_capturadas = set()
+    
+    for idx, fuente in enumerate(FUENTES_ABURRA, 1):
+        try:
+            print(f"[{idx}/{len(FUENTES_ABURRA)}] Consultando: {fuente}")
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+            response = requests.get(fuente, headers=headers, timeout=3)
+            
+            print(f"-> Estado HTTP: {response.status_code}")
+            
+            if response.status_code == 200:
+                contenido = response.text
+                print(f"-> Tamaño contenido: {len(contenido)} caracteres")
+                
+                # Filtro de palabras clave para movilidad y tráfico
+                if any(palabra in contenido.lower() for palabra in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "mobilidad", "movilidad"]):
+                    novedades_capturadas.add(f"Alerta en fuente: {fuente}")
+            else:
+                print(f"-> ALERTA: Código {response.status_code} en {fuente}")
+                
+        except Exception as e:
+            print(f"-> ERROR/TIMEOUT en {fuente}: {e}")
 
-  # 3. Desduplicación estricta por contenido
-  hallazgos_unicos = []
-  vistos = set()
-  for h in hallazgos_crudos:
-    texto_comparacion = h.lower().strip()
-    if texto_comparacion not in vistos:
-      vistos.add(texto_comparacion)
-      hallazgos_unicos.append(h)
+    print(f"--- FIN DEL BARRIDO. Novedades únicas encontradas: {len(novedades_capturadas)} ---")
+    return list(novedades_capturadas)
 
-  return hallazgos_unicos
-
-
-def tarea_cron():
-  """Los crons ejecutan el barrido automáticamente solo dentro de la ventana."""
-  global NOVEDADES_CACHE
-  if not esta_en_ventana_operativa():
-    return
-  resultados = ejecutar_barrido_web()
-  if resultados:
-    NOVEDADES_CACHE = resultados
-
-
-# Configurar planificador de crons a los minutos 15 y 45
-scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(tarea_cron, "cron", minute="15,45", id="cron_job")
-scheduler.start()
-
-
-@app.route("/webhook", methods=["POST"])
+@app.route('/webhook', methods=['POST'])
 def webhook():
-  data = request.get_json()
-  if not data or "message" not in data:
+    data = request.get_json(silent=True)
+    
+    # CHIVATO DE ENTRADA: Muestra exactamente lo que llega de Telegram
+    print(f"--> WEBHOOK RECIBIDO: {data}")
+    
+    if data and 'message' in data:
+        chat_id = data['message']['chat']['id']
+        texto_msg = data['message'].get('text', '').strip()
+        print(f"--> Texto extraído del mensaje: '{texto_msg}'")
+        
+        # Validamos si mandó la 'P' (mayúscula o minúscula)
+        if texto_msg.upper() == 'P':
+            print("--> Comando 'P' RECONOCIDO. Iniciando escaneo de 82 fuentes...")
+            resultados = ejecutar_barrido_trafico()
+            
+            if not resultados:
+                respuesta = "SIN NOVEDADES"
+                print("--> Resultado a enviar: SIN NOVEDADES")
+            else:
+                respuesta = "\n".join(resultados)
+                print(f"--> Enviando {len(resultados)} novedades encontradas.")
+                
+            enviar_mensaje_telegram(chat_id, respuesta)
+        else:
+            print(f"--> El mensaje '{texto_msg}' no coincidió con el comando 'P'.")
+    else:
+        print("--> El evento recibido no contiene la estructura de un mensaje de texto.")
+            
     return "OK", 200
 
-  chat_id = data["message"]["chat"]["id"]
-  texto = data["message"].get("text", "").strip()
-  hora_legal_str = datetime.now(bogota_tz).strftime("%I:%M %p")
-  url_api = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+@app.route('/', methods=['GET'])
+def home():
+    return "KITT-BOT Traffic Monitoring Online!", 200
 
-  if texto.lower() in ["/start", "hola"]:
-    requests.post(
-        url_api,
-        json={
-            "chat_id": chat_id,
-            "text": (
-                "¡Hola, Raúl! KITT-BOT operando. Crons en horario y Comando P"
-                " sin duplicados 24/7."
-            ),
-        },
-    )
-
-  elif texto.upper() == "P" or texto.lower() == "/p":
-    # El comando P ejecuta barrido en tiempo real y desduplica antes de responder
-    hallazgos_demanda = ejecutar_barrido_web()
-
-    if not hallazgos_demanda:
-      respuesta = (
-          f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
-          f" {hora_legal_str}\n\nSIN NOVEDADES"
-      )
-    else:
-      cuerpo_reporte = "\n".join(hallazgos_demanda)
-      respuesta = (
-          f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
-          f" {hora_legal_str}\n\n{cuerpo_reporte}"
-      )
-
-    requests.post(
-        url_api,
-        json={"chat_id": chat_id, "text": respuesta, "parse_mode": "Markdown"},
-    )
-
-  return "OK", 200
-
-
-if __name__ == "__main__":
-  app.run(host="0.0.0.0", port=5000)
-    
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
