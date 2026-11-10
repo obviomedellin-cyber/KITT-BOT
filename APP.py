@@ -104,42 +104,51 @@ def esta_en_ventana_operativa():
 
 
 def ejecutar_barrido_web():
-  """Motor central de extracción que alimenta la caché o responde por demanda."""
-  hallazgos = []
+  """Motor central de extracción con control estricto anti-duplicados."""
+  hallazgos_crudos = []
   headers = {"User-Agent": "Mozilla/5.0"}
 
-  # Barrido de RSS locales
+  # 1. Extracción desde RSS Locales
   for url_rss in FEEDS_RSS_LOCALES:
     try:
       resp = requests.get(url_rss, headers=headers, timeout=3)
       if resp.status_code == 200:
         soup = BeautifulSoup(resp.content, "xml")
-        for item in soup.find_all("item")[:3]:
+        for item in soup.find_all("item")[:4]:
           titulo = (
               item.find("title").get_text(strip=True)
               if item.find("title")
               else ""
           )
           if any(f.lower() in titulo.lower() for f in FILTROS_VALLE_52):
-            hallazgos.append(f"📰 **Medios**: {titulo}")
+            hallazgos_crudos.append(f"📰 **Medios**: {titulo}")
     except Exception:
       pass
 
-  # Barrido de Cuentas Oficiales vía Nitter
+  # 2. Extracción desde Cuentas de X vía Nitter
   for cuenta in CUENTAS_X_OFICIALES:
     try:
       url = f"https://nitter.privacydev.net/{cuenta}"
       resp = requests.get(url, headers=headers, timeout=3)
       if resp.status_code == 200:
         soup = BeautifulSoup(resp.text, "html.parser")
-        for tweet in soup.select(".tweet-content")[:2]:
+        for tweet in soup.select(".tweet-content")[:3]:
           texto = tweet.get_text(strip=True)
           if any(f.lower() in texto.lower() for f in FILTROS_VALLE_52):
-            hallazgos.append(f"📱 **@{cuenta}**: {texto}")
+            hallazgos_crudos.append(f"📱 **@{cuenta}**: {texto}")
     except Exception:
       pass
 
-  return list(set(hallazgos))
+  # 3. Desduplicación estricta por contenido
+  hallazgos_unicos = []
+  vistos = set()
+  for h in hallazgos_crudos:
+    texto_comparacion = h.lower().strip()
+    if texto_comparacion not in vistos:
+      vistos.add(texto_comparacion)
+      hallazgos_unicos.append(h)
+
+  return hallazgos_unicos
 
 
 def tarea_cron():
@@ -176,13 +185,13 @@ def webhook():
             "chat_id": chat_id,
             "text": (
                 "¡Hola, Raúl! KITT-BOT operando. Crons en horario y Comando P"
-                " con barrido en vivo 24/7."
+                " sin duplicados 24/7."
             ),
         },
     )
 
   elif texto.upper() == "P" or texto.lower() == "/p":
-    # El comando P ejecuta un barrido en tiempo real por demanda en cualquier momento
+    # El comando P ejecuta barrido en tiempo real y desduplica antes de responder
     hallazgos_demanda = ejecutar_barrido_web()
 
     if not hallazgos_demanda:
@@ -207,4 +216,3 @@ def webhook():
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
-    
