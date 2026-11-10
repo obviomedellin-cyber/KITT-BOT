@@ -113,9 +113,6 @@ def configurar_webhook_automatico():
         print(f"-> Error conectando con Telegram: {e}", flush=True)
     print("=========================================", flush=True)
 
-# Ejecutar diagnóstico al cargar el módulo
-configurar_webhook_automatico()
-
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         print("-> Error: Imposible enviar mensaje, falta TELEGRAM_TOKEN.", flush=True)
@@ -188,7 +185,9 @@ def webhook():
             
     return "OK", 200
 
+# Ejecutar el diagnóstico inmediatamente al cargar app.py
+configurar_webhook_automatico()
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
