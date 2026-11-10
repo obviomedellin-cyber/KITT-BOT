@@ -8,6 +8,7 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
+# Las 84 fuentes completas de movilidad, tráfico y emergencias del Valle de Aburrá
 FUENTES_ABURRA = [
     "https://nitter.privacydev.net/AlcaldiaMed",
     "https://nitter.privacydev.net/TransitoMedellin",
@@ -123,7 +124,6 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
 
 def ejecutar_barrido_trafico():
     novedades = []
-    # Keywords completas extraídas de tus documentos de Google Drive
     palabras_clave = [
         "accidente", "reten", "cierre", "trancon", "congestion", "atropello", 
         "volcado", "incendio", "caida arbol", "protesta", "bloqueo", "marcha", 
@@ -171,10 +171,11 @@ def webhook():
         if texto_msg.lower() == '/start':
             enviar_mensaje_telegram(
                 chat_id, 
-                "🤖 **Kitt en línea.** Presiona el botón **P** abajo para ejecutar el barrido en las 82 fuentes.",
+                "🤖 **Kitt en línea.** Presiona el botón **P** abajo para ejecutar el barrido manual por demanda.",
                 incluir_teclado=True
             )
         else:
+            # Petición por demanda independiente de los cron jobs programados
             resultados = ejecutar_barrido_trafico()
             if not resultados:
                 resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
