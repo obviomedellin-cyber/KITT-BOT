@@ -103,15 +103,12 @@ def esta_en_ventana_operativa():
   return False
 
 
-def tarea_cron():
-  """Los crons sí se ejecutan estrictamente dentro de la ventana operativa."""
-  global NOVEDADES_CACHE
-  if not esta_en_ventana_operativa():
-    return
-
+def ejecutar_barrido_web():
+  """Motor central de extracción que alimenta la caché o responde por demanda."""
   hallazgos = []
   headers = {"User-Agent": "Mozilla/5.0"}
 
+  # Barrido de RSS locales
   for url_rss in FEEDS_RSS_LOCALES:
     try:
       resp = requests.get(url_rss, headers=headers, timeout=3)
@@ -128,6 +125,7 @@ def tarea_cron():
     except Exception:
       pass
 
+  # Barrido de Cuentas Oficiales vía Nitter
   for cuenta in CUENTAS_X_OFICIALES:
     try:
       url = f"https://nitter.privacydev.net/{cuenta}"
@@ -141,8 +139,17 @@ def tarea_cron():
     except Exception:
       pass
 
-  if hallazgos:
-    NOVEDADES_CACHE = list(set(hallazgos))
+  return list(set(hallazgos))
+
+
+def tarea_cron():
+  """Los crons ejecutan el barrido automáticamente solo dentro de la ventana."""
+  global NOVEDADES_CACHE
+  if not esta_en_ventana_operativa():
+    return
+  resultados = ejecutar_barrido_web()
+  if resultados:
+    NOVEDADES_CACHE = resultados
 
 
 # Configurar planificador de crons a los minutos 15 y 45
@@ -169,20 +176,22 @@ def webhook():
             "chat_id": chat_id,
             "text": (
                 "¡Hola, Raúl! KITT-BOT operando. Crons en horario y Comando P"
-                " libre 24/7."
+                " con barrido en vivo 24/7."
             ),
         },
     )
 
   elif texto.upper() == "P" or texto.lower() == "/p":
-    # El comando P ya NO valida la ventana operativa: responde siempre por demanda
-    if not NOVEDADES_CACHE:
+    # El comando P ejecuta un barrido en tiempo real por demanda en cualquier momento
+    hallazgos_demanda = ejecutar_barrido_web()
+
+    if not hallazgos_demanda:
       respuesta = (
           f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
           f" {hora_legal_str}\n\nSIN NOVEDADES"
       )
     else:
-      cuerpo_reporte = "\n".join(NOVEDADES_CACHE)
+      cuerpo_reporte = "\n".join(hallazgos_demanda)
       respuesta = (
           f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
           f" {hora_legal_str}\n\n{cuerpo_reporte}"
@@ -198,4 +207,4 @@ def webhook():
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
-
+    
