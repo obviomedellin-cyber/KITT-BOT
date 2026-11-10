@@ -1,11 +1,11 @@
 import os
 import requests
-from flask import Flask, request
+from Flask import Flask, request
 
 app = Flask(__name__)
 
-# Token inyectado directamente para garantizar funcionamiento inmediato en Render
-TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
+# Se lee de forma segura desde las variables de entorno de Render
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
 FUENTES_ABURRA = [
@@ -98,9 +98,13 @@ FUENTES_ABURRA = [
 def configurar_webhook_automatico():
     print("=========================================", flush=True)
     print("--- INICIANDO DIAGNÓSTICO DE KITT ---", flush=True)
+    if not TELEGRAM_TOKEN:
+        print("-> [ERROR FATAL] TELEGRAM_TOKEN está VACÍO en Render.", flush=True)
+        print("=========================================", flush=True)
+        return
     
     token_parcial = TELEGRAM_TOKEN[:5] + "..." if len(TELEGRAM_TOKEN) > 5 else "MUY CORTO"
-    print(f"-> TOKEN DETECTADO DIRECTAMENTE: {token_parcial} (Longitud: {len(TELEGRAM_TOKEN)})", flush=True)
+    print(f"-> TOKEN DETECTADO: {token_parcial} (Longitud: {len(TELEGRAM_TOKEN)})", flush=True)
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
     try:
@@ -111,6 +115,8 @@ def configurar_webhook_automatico():
     print("=========================================", flush=True)
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
+    if not TELEGRAM_TOKEN:
+        return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -124,13 +130,11 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
             "one_time_keyboard": False
         }
     try:
-        r = requests.post(url, json=payload, timeout=5)
-        print(f"-> Mensaje enviado a Telegram: {r.status_code} - {r.text}", flush=True)
-    except Exception as e:
-        print(f"-> Error enviando mensaje a Telegram: {e}", flush=True)
+        requests.post(url, json=payload, timeout=5)
+    except Exception:
+        pass
 
 def ejecutar_barrido_trafico():
-    print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES ---", flush=True)
     novedades = set()
     for fuente in FUENTES_ABURRA:
         try:
@@ -141,7 +145,6 @@ def ejecutar_barrido_trafico():
                     novedades.add(f"Alerta: {fuente}")
         except Exception:
             pass
-    print(f"--- BARRIDO FINALIZADO. Hallazgos: {len(novedades)} ---", flush=True)
     return list(novedades)
 
 @app.route('/', methods=['GET'])
@@ -152,8 +155,6 @@ def home():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(silent=True) or request.form.to_dict()
-    print(f"--> PETICIÓN RECIBIDA EN WEBHOOK: {data}", flush=True)
-    
     chat_id = None
     texto_msg = ""
     
@@ -170,7 +171,6 @@ def webhook():
                 incluir_teclado=True
             )
         else:
-            print("--> Ejecutando barrido por demanda...", flush=True)
             resultados = ejecutar_barrido_trafico()
             if not resultados:
                 resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
@@ -185,4 +185,3 @@ configurar_webhook_automatico()
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
