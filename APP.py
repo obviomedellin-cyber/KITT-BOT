@@ -130,7 +130,7 @@ def ejecutar_barrido_trafico():
     print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES EN VIVO ---")
     novedades_capturadas = set()
     
-    for idx, fuente in enumerate(FUENTES_ABURRA, 1):
+    for fuente in FUENTES_ABURRA:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
             response = requests.get(fuente, headers=headers, timeout=2)
@@ -139,7 +139,7 @@ def ejecutar_barrido_trafico():
                 contenido = response.text
                 if any(palabra in contenido.lower() for palabra in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "mobilidad", "movilidad"]):
                     novedades_capturadas.add(f"Alerta en fuente: {fuente}")
-        except Exception as e:
+        except Exception:
             pass
 
     print(f"--- FIN DEL BARRIDO. Novedades únicas encontradas: {len(novedades_capturadas)} ---")
@@ -182,4 +182,3 @@ def webhook():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
