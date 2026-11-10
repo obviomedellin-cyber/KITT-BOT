@@ -1,4 +1,6 @@
 flask
-python-telegram-bot
 requests
 pytz
+beautifulsoup4
+lxml
+apscheduler
