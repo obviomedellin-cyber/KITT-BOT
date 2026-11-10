@@ -95,17 +95,9 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
-def registrar_webhook():
-    if TELEGRAM_TOKEN:
-        try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
-            res = requests.get(url, timeout=5)
-            print(f"=== WEBHOOK REGISTRADO EN TELEGRAM: {res.text} ===", flush=True)
-        except Exception as e:
-            print(f"=== ERROR AL REGISTRAR WEBHOOK: {e} ===", flush=True)
-
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
+        print("-> [ERROR] No se puede enviar mensaje: TELEGRAM_TOKEN no está definido.", flush=True)
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
@@ -120,30 +112,41 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
             "one_time_keyboard": False
         }
     try:
-        requests.post(url, json=payload, timeout=5)
-    except Exception:
-        pass
+        res = requests.post(url, json=payload, timeout=5)
+        print(f"-> Resultado envío Telegram: {res.status_code} | {res.text}", flush=True)
+    except Exception as e:
+        print(f"-> Excepción enviando mensaje: {e}", flush=True)
 
 def ejecutar_barrido_trafico():
-    novedades = set()
+    novedades = []
     for fuente in FUENTES_ABURRA:
         try:
             res = requests.get(fuente, headers={'User-Agent': 'Mozilla/5.0'}, timeout=2)
             if res.status_code == 200:
                 c = res.text.lower()
                 if any(p in c for p in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "movilidad"]):
-                    novedades.add(f"Alerta: {fuente}")
+                    novedades.append(f"Alerta: {fuente}")
         except Exception:
             pass
-    return list(novedades)
+    # Mostramos los reportes más recientes primero
+    return list(reversed(novedades))
 
 @app.route('/', methods=['GET'])
 def home():
+    if TELEGRAM_TOKEN:
+        try:
+            url_wh = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+            r = requests.get(url_wh, timeout=3)
+            print(f"-> Webhook auto-registrado desde raíz: {r.text}", flush=True)
+        except Exception as e:
+            print(f"-> Error auto-registrando webhook: {e}", flush=True)
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(force=True, silent=True) or request.form.to_dict()
+    print(f"-> PETICIÓN WEBHOOK RECIBIDA: {data}", flush=True)
+    
     chat_id = None
     texto_msg = ""
     
@@ -168,9 +171,6 @@ def webhook():
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
-
-# Registramos el webhook justo al cargar el script en Gunicorn/Flask
-registrar_webhook()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
