@@ -95,9 +95,9 @@ FUENTES_ABURRA = [
 ]
 
 def configurar_webhook_automatico():
-    print("--- INTENTANDO CONFIGURAR WEBHOOK AUTOMÁTICAMENTE ---")
+    print("--- INICIANDO VERIFICACIÓN DE WEBHOOK ---")
     if not TELEGRAM_TOKEN:
-        print("-> ADVERTENCIA: TELEGRAM_TOKEN no está definido en las variables de entorno.")
+        print("-> ALERTA CRÍTICA: TELEGRAM_TOKEN no está configurado en Render (Environment). Revisa el panel.")
         return
     
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
@@ -107,12 +107,12 @@ def configurar_webhook_automatico():
     except Exception as e:
         print(f"-> Error autoconfigurando webhook: {e}")
 
-# Se ejecuta al importar el módulo (ideal para Gunicorn en Render)
+# Autoconfiguración al importar/iniciar
 configurar_webhook_automatico()
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
-        print("-> Error: No se puede enviar mensaje porque falta TELEGRAM_TOKEN.")
+        print("-> Error: Imposible enviar mensaje, falta TELEGRAM_TOKEN.")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
@@ -128,7 +128,7 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
         }
     try:
         r = requests.post(url, json=payload, timeout=5)
-        print(f"-> Resultado envío de mensaje a Telegram: {r.status_code} - {r.text}")
+        print(f"-> Mensaje enviado a Telegram: {r.status_code} - {r.text}")
     except Exception as e:
         print(f"-> Error enviando mensaje a Telegram: {e}")
 
@@ -172,7 +172,7 @@ def webhook():
                 incluir_teclado=True
             )
         else:
-            print("--> Ejecutando barrido por demanda debido a interacción...")
+            print("--> Ejecutando barrido por demanda...")
             resultados = ejecutar_barrido_trafico()
             if not resultados:
                 resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
@@ -185,3 +185,4 @@ def webhook():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
+                                                    
