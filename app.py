@@ -123,7 +123,18 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
 
 def ejecutar_barrido_trafico():
     novedades = []
-    palabras_clave = ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "movilidad"]
+    # Keywords completas extraídas de tus documentos de Google Drive
+    palabras_clave = [
+        "accidente", "reten", "cierre", "trancon", "congestion", "atropello", 
+        "volcado", "incendio", "caida arbol", "protesta", "bloqueo", "marcha", 
+        "fallecido", "heridos", "emergencia", "azules", "azulitos", "retenes", 
+        "Mega reten", "circo", "puesto de control", "gases", "Puntos", "tránsito", 
+        "alcoholemia", "puestos de control", "pitufos", "guarda", "guardas", "901", 
+        "muerto", "matado", "choque", "taco", "7 3", "parqueadero", "cierres programados", 
+        "persisten", "continúa", "sigue", "túnel", "oriente", "caliente", "vías cerradas", 
+        "vía cerrada", "balacera", "orden público", "zona roja", "no se mueve", 
+        "activo", "activos", "siniestro"
+    ]
     
     for fuente in FUENTES_ABURRA:
         try:
