@@ -4,7 +4,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+# Token inyectado directamente para garantizar funcionamiento inmediato en Render
+TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
 FUENTES_ABURRA = [
@@ -97,13 +98,9 @@ FUENTES_ABURRA = [
 def configurar_webhook_automatico():
     print("=========================================", flush=True)
     print("--- INICIANDO DIAGNÓSTICO DE KITT ---", flush=True)
-    if not TELEGRAM_TOKEN:
-        print("-> [ERROR FATAL] TELEGRAM_TOKEN está VACÍO en Render.", flush=True)
-        print("=========================================", flush=True)
-        return
     
     token_parcial = TELEGRAM_TOKEN[:5] + "..." if len(TELEGRAM_TOKEN) > 5 else "MUY CORTO"
-    print(f"-> TOKEN DETECTADO: {token_parcial} (Longitud: {len(TELEGRAM_TOKEN)})", flush=True)
+    print(f"-> TOKEN DETECTADO DIRECTAMENTE: {token_parcial} (Longitud: {len(TELEGRAM_TOKEN)})", flush=True)
 
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
     try:
@@ -114,9 +111,6 @@ def configurar_webhook_automatico():
     print("=========================================", flush=True)
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
-    if not TELEGRAM_TOKEN:
-        print("-> Error: Imposible enviar mensaje, falta TELEGRAM_TOKEN.", flush=True)
-        return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -191,4 +185,4 @@ configurar_webhook_automatico()
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
+    
