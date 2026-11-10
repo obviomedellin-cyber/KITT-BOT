@@ -4,8 +4,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token de tu bot de Telegram leído desde las variables de entorno de Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "TU_TOKEN_AQUI")
+# Token oficial y definitivo de tu bot de Telegram
+TELEGRAM_TOKEN = "9072501655:AAGloLFkdzLjhiZu6xrbyV205eSPONskp4U"
 
 # Lista completa de las 82 fuentes del Valle de Aburrá
 FUENTES_ABURRA = [
@@ -169,19 +169,17 @@ def home():
         return f"KITT-BOT: Barrido completado. Novedades encontradas:<br>{'<br>'.join(resultados)}", 200
 
 def configurar_webhook_automatico():
-    if TELEGRAM_TOKEN and TELEGRAM_TOKEN != "TU_TOKEN_AQUI":
-        url_webhook = "https://kitt-bot.onrender.com/webhook"
-        url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
-        try:
-            resp = requests.get(url_telegram, timeout=5)
-            print(f"-> Autoconfiguración de Webhook: {resp.text}")
-        except Exception as e:
-            print(f"-> Error configurando webhook automáticamente: {e}")
+    url_webhook = "https://kitt-bot.onrender.com/webhook"
+    url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
+    try:
+        resp = requests.get(url_telegram, timeout=5)
+        print(f"-> Autoconfiguración de Webhook: {resp.text}")
+    except Exception as e:
+        print(f"-> Error configurando webhook automáticamente: {e}")
 
-# Configurar webhook al arrancar la app en Render
+# Configurar webhook al arrancar la app en Render de forma nativa
 configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-                            
