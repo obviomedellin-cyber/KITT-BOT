@@ -132,9 +132,8 @@ def ejecutar_barrido_trafico():
     
     for idx, fuente in enumerate(FUENTES_ABURRA, 1):
         try:
-            print(f"[{idx}/{len(FUENTES_ABURRA)}] Consultando: {fuente}")
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(fuente, headers=headers, timeout=3)
+            response = requests.get(fuente, headers=headers, timeout=2)
             
             if response.status_code == 200:
                 contenido = response.text
@@ -146,10 +145,14 @@ def ejecutar_barrido_trafico():
     print(f"--- FIN DEL BARRIDO. Novedades únicas encontradas: {len(novedades_capturadas)} ---")
     return list(novedades_capturadas)
 
+@app.route('/', methods=['GET'])
+def home():
+    return "KITT-BOT Valle de Aburrá Operativo y Escuchando Webhooks", 200
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(silent=True)
-    print(f"--> WEBHOOK RECIBIDO: {data}")
+    print(f"--> WEBHOOK RECIBIDO EXITOSAMENTE: {data}")
     
     if data and 'message' in data:
         chat = data['message'].get('chat', {})
@@ -163,7 +166,7 @@ def webhook():
                 incluir_teclado=True
             )
         elif texto_msg != '':
-            print("--> Ejecutando barrido de tráfico por demanda...")
+            print("--> Ejecutando barrido de tráfico por demanda a petición del usuario...")
             resultados = ejecutar_barrido_trafico()
             
             if not resultados:
@@ -176,27 +179,7 @@ def webhook():
     
     return "OK", 200
 
-@app.route('/', methods=['GET'])
-def home():
-    resultados = ejecutar_barrido_trafico()
-    if not resultados:
-        return "KITT-BOT: Barrido completado. SIN NOVEDADES en las 82 fuentes.", 200
-    else:
-        return f"KITT-BOT: Barrido completado. Novedades encontradas:<br>{'<br>'.join(resultados)}", 200
-
-def configurar_webhook_automatico():
-    if TELEGRAM_TOKEN:
-        url_webhook = "https://kitt-bot.onrender.com/webhook"
-        url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
-        try:
-            resp = requests.get(url_telegram, timeout=5)
-            print(f"-> Autoconfiguración de Webhook: {resp.text}")
-        except Exception as e:
-            print(f"-> Error configurando webhook automáticamente: {e}")
-
-configurar_webhook_automatico()
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-                          
+    
