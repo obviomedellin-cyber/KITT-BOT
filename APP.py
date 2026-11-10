@@ -17,4 +17,6 @@ class MINIKITLogic:
             {
                 "zona": "Medellín (El Poblado - Las Palmas)",
                 "lat": 6.2090, "lon": -75.5670
-      
+          }
+        ]
+        
