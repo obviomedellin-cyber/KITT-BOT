@@ -95,16 +95,21 @@ FUENTES_ABURRA = [
 ]
 
 def configurar_webhook_automatico():
-    if TELEGRAM_TOKEN:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
-        try:
-            res = requests.get(url, timeout=5)
-            print(f"-> Autoconfiguración de Webhook: {res.text}")
-        except Exception as e:
-            print(f"-> Error autoconfigurando webhook: {e}")
+    print("--- INTENTANDO CONFIGURAR WEBHOOK AUTOMÁTICAMENTE ---")
+    if not TELEGRAM_TOKEN:
+        print("-> ADVERTENCIA: TELEGRAM_TOKEN no está definido en las variables de entorno.")
+        return
+    
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+    try:
+        res = requests.get(url, timeout=5)
+        print(f"-> Respuesta de Telegram al configurar webhook: {res.text}")
+    except Exception as e:
+        print(f"-> Error autoconfigurando webhook: {e}")
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
+        print("-> Error: No se puede enviar mensaje porque falta TELEGRAM_TOKEN.")
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
@@ -119,9 +124,10 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
             "one_time_keyboard": False
         }
     try:
-        requests.post(url, json=payload, timeout=5)
+        r = requests.post(url, json=payload, timeout=5)
+        print(f"-> Resultado envío de mensaje a Telegram: {r.status_code} - {r.text}")
     except Exception as e:
-        print(f"-> Error enviando mensaje: {e}")
+        print(f"-> Error enviando mensaje a Telegram: {e}")
 
 def ejecutar_barrido_trafico():
     print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES ---")
@@ -140,7 +146,7 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
-    return "KITT-BOT Activo", 200
+    return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -163,12 +169,12 @@ def webhook():
                 incluir_teclado=True
             )
         else:
-            print("--> Ejecutando barrido por demanda...")
+            print("--> Ejecutando barrido por demanda debido a interacción...")
             resultados = ejecutar_barrido_trafico()
             if not resultados:
                 resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
             else:
-                resp = "⚠️ **NOVEDADES:**\n\n" + "\n".join(resultados)
+                resp = "⚠️ **NOVEDADES DETECTADAS:**\n\n" + "\n".join(resultados)
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
@@ -177,4 +183,4 @@ if __name__ == '__main__':
     configurar_webhook_automatico()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-        
+
