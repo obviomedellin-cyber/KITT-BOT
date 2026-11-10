@@ -4,7 +4,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token de tu bot de Telegram y configuración base
+# Token de tu bot de Telegram
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "TU_TOKEN_AQUI")
 
 # Lista completa de las 82 fuentes del Valle de Aburrá
@@ -147,8 +147,6 @@ def ejecutar_barrido_trafico():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(silent=True)
-    
-    # CHIVATO DE ENTRADA: Muestra exactamente lo que llega de Telegram
     print(f"--> WEBHOOK RECIBIDO: {data}")
     
     if data and 'message' in data:
@@ -156,7 +154,6 @@ def webhook():
         texto_msg = data['message'].get('text', '').strip()
         print(f"--> Texto extraído del mensaje: '{texto_msg}'")
         
-        # Validamos si mandó la 'P' (mayúscula o minúscula)
         if texto_msg.upper() == 'P':
             print("--> Comando 'P' RECONOCIDO. Iniciando escaneo de 82 fuentes...")
             resultados = ejecutar_barrido_trafico()
@@ -181,5 +178,5 @@ def home():
     return "KITT-BOT Traffic Monitoring Online!", 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
