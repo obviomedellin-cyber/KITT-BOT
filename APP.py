@@ -25,4 +25,25 @@ def home():
 
 @app.route("/webhook", methods=["POST"])
 def telegram_webhook():
-    data = request.
+    data = request.get_json()
+    if data and "message" in data:
+        message = data["message"]
+        chat_id = message["chat"].get("id")
+        texto_usuario = message.get("text", "")
+
+        if texto_usuario.startswith("/start"):
+            respuesta = (
+                "¡Hola, Raúl! KITT-BOT en línea.\n"
+                f"📊 Fuentes cargadas: {len(BASE_DATOS_AZULES)}\n"
+                f"📍 Filtros Valle de Aburrá: {len(VALLE_ABURRA)}\n"
+                "Listo para monitorear la movilidad y datos."
+            )
+        else:
+            respuesta = f"KITT-BOT recibió tu reporte: '{texto_usuario}'. Procesando con los datos activos..."
+
+        enviar_mensaje(chat_id, respuesta)
+
+    return "OK", 200
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=PORT)
