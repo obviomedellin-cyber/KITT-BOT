@@ -81,6 +81,10 @@ NOVEDADES_CACHE = []
 
 
 def esta_en_ventana_operativa():
+  """Valida si la hora actual está dentro del turno del conductor
+
+  (exclusivo para los crons automáticos).
+  """
   ahora = datetime.now(bogota_tz)
   dia_semana = ahora.weekday()
   hora = ahora.hour
@@ -100,6 +104,7 @@ def esta_en_ventana_operativa():
 
 
 def tarea_cron():
+  """Los crons sí se ejecutan estrictamente dentro de la ventana operativa."""
   global NOVEDADES_CACHE
   if not esta_en_ventana_operativa():
     return
@@ -162,17 +167,16 @@ def webhook():
         url_api,
         json={
             "chat_id": chat_id,
-            "text": "¡Hola, Raúl! KITT-BOT operando con éxito.",
+            "text": (
+                "¡Hola, Raúl! KITT-BOT operando. Crons en horario y Comando P"
+                " libre 24/7."
+            ),
         },
     )
 
   elif texto.upper() == "P" or texto.lower() == "/p":
-    if not esta_en_ventana_operativa():
-      respuesta = (
-          f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
-          f" {hora_legal_str}\n\nFuera de ventana operativa establecida."
-      )
-    elif not NOVEDADES_CACHE:
+    # El comando P ya NO valida la ventana operativa: responde siempre por demanda
+    if not NOVEDADES_CACHE:
       respuesta = (
           f"🕒 **REPORTE TOTAL UNIFICADO VALLE DE ABURRÁ**\n🕒"
           f" {hora_legal_str}\n\nSIN NOVEDADES"
@@ -194,3 +198,4 @@ def webhook():
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
+
