@@ -4,12 +4,9 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token leído de forma segura desde las variables de entorno de Render
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
-# Lista completa de las 82 fuentes del Valle de Aburrá
 FUENTES_ABURRA = [
-    # --- MEDELLÍN Y SECRETARÍA DE MOVILIDAD ---
     "https://nitter.privacydev.net/AlcaldiaMed",
     "https://nitter.privacydev.net/TransitoMedellin",
     "https://nitter.privacydev.net/DAGRDMedellin",
@@ -18,8 +15,6 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/MedellinResponde",
     "https://nitter.privacydev.net/SecMovilidadMed",
     "https://nitter.privacydev.net/CulturaTransito",
-    
-    # --- EMERGENCIAS, BOMBEROS Y SEGURIDAD ANTIOQUIA ---
     "https://nitter.privacydev.net/GobAntioquia",
     "https://nitter.privacydev.net/SecSeguridadMed",
     "https://nitter.privacydev.net/BomberosMed",
@@ -28,8 +23,6 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/TransitPolicia",
     "https://nitter.privacydev.net/EmergenciasMed",
     "https://nitter.privacydev.net/MovilidadAnt",
-    
-    # --- CONCESIONES VIALES Y AUTOPISTAS ---
     "https://nitter.privacydev.net/Devimed",
     "https://nitter.privacydev.net/ConvisaVias",
     "https://nitter.privacydev.net/AutopistasCafe",
@@ -39,8 +32,6 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/TusViasAntioquia",
     "https://nitter.privacydev.net/Inviias",
     "https://nitter.privacydev.net/RedVialNal",
-    
-    # --- MUNICIPIOS DEL VALLE DE ABURRÁ (NORTE A SUR) ---
     "https://nitter.privacydev.net/AlcaldiaBarbosa",
     "https://nitter.privacydev.net/TransitoBarbosa",
     "https://nitter.privacydev.net/AlcaldiaGirardota",
@@ -60,8 +51,6 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/TransitoEstrella",
     "https://nitter.privacydev.net/AlcaldiaCaldasAnt",
     "https://nitter.privacydev.net/TransitoCaldas",
-    
-    # --- MEDIOS DE COMUNICACIÓN Y REPORTES CIUDADANOS / RADIALES ---
     "https://nitter.privacydev.net/DenunciasAntio2",
     "https://nitter.privacydev.net/GuardianesMed",
     "https://nitter.privacydev.net/AlertaMedellin",
@@ -113,70 +102,65 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
         "text": texto,
         "parse_mode": "Markdown"
     }
-    
     if incluir_teclado:
         payload["reply_markup"] = {
             "keyboard": [[{"text": "P"}]],
             "resize_keyboard": True,
             "one_time_keyboard": False
         }
-        
     try:
         requests.post(url, json=payload, timeout=5)
     except Exception as e:
-        print(f"-> Error enviando mensaje a Telegram: {e}")
+        print(f"-> Error enviando mensaje: {e}")
 
 def ejecutar_barrido_trafico():
-    print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES EN VIVO ---")
-    novedades_capturadas = set()
-    
+    print(f"--- INICIANDO BARRIDO DE {len(FUENTES_ABURRA)} FUENTES ---")
+    novedades = set()
     for fuente in FUENTES_ABURRA:
         try:
-            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(fuente, headers=headers, timeout=2)
-            
-            if response.status_code == 200:
-                contenido = response.text
-                if any(palabra in contenido.lower() for palabra in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "mobilidad", "movilidad"]):
-                    novedades_capturadas.add(f"Alerta en fuente: {fuente}")
+            res = requests.get(fuente, headers={'User-Agent': 'Mozilla/5.0'}, timeout=2)
+            if res.status_code == 200:
+                c = res.text.lower()
+                if any(p in c for p in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "movilidad"]):
+                    novedades.add(f"Alerta: {fuente}")
         except Exception:
             pass
-
-    print(f"--- FIN DEL BARRIDO. Novedades únicas encontradas: {len(novedades_capturadas)} ---")
-    return list(novedades_capturadas)
+    print(f"--- BARRIDO FINALIZADO. Hallazgos: {len(novedades)} ---")
+    return list(novedades)
 
 @app.route('/', methods=['GET'])
 def home():
-    return "KITT-BOT Valle de Aburrá Operativo y Escuchando Webhooks", 200
+    return "KITT-BOT Activo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    data = request.get_json(silent=True)
-    print(f"--> WEBHOOK RECIBIDO EXITOSAMENTE: {data}")
+    data = request.get_json(silent=True) or request.form.to_dict()
+    print(f"--> PETICIÓN RECIBIDA EN WEBHOOK: {data}")
+    
+    chat_id = None
+    texto_msg = ""
     
     if data and 'message' in data:
-        chat = data['message'].get('chat', {})
-        chat_id = chat.get('id')
-        texto_msg = data['message'].get('text', '').strip()
-        
+        msg = data['message']
+        chat_id = msg.get('chat', {}).get('id')
+        texto_msg = msg.get('text', '').strip()
+    
+    if chat_id:
         if texto_msg.lower() == '/start':
             enviar_mensaje_telegram(
                 chat_id, 
-                "🤖 **Kitt activado.** Presiona el botón **P** abajo en tu pantalla para iniciar el barrido de tráfico en las 82 fuentes.",
+                "🤖 **Kitt en línea.** Presiona el botón **P** abajo para ejecutar el barrido en las 82 fuentes.",
                 incluir_teclado=True
             )
-        elif texto_msg != '':
-            print("--> Ejecutando barrido de tráfico por demanda a petición del usuario...")
+        else:
+            print("--> Ejecutando barrido por demanda...")
             resultados = ejecutar_barrido_trafico()
-            
             if not resultados:
-                respuesta = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
+                resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
             else:
-                respuesta = "⚠️ **NOVEDADES DETECTADAS:**\n\n" + "\n".join(resultados)
-                
-            if chat_id:
-                enviar_mensaje_telegram(chat_id, respuesta, incluir_teclado=True)
-    
+                resp = "⚠️ **NOVEDADES:**\n\n" + "\n".join(resultados)
+            enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
+            
     return "OK", 200
 
 if __name__ == '__main__':
