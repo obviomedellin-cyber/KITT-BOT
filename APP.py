@@ -4,7 +4,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token de tu bot leído de forma segura desde las variables de entorno de Render
+# Token oficial leído de forma segura desde las variables de entorno de Render
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 
 # Lista completa de las 82 fuentes del Valle de Aburrá
@@ -104,7 +104,7 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
-def enviar_mensaje_telegram(chat_id, texto):
+def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -113,6 +113,15 @@ def enviar_mensaje_telegram(chat_id, texto):
         "text": texto,
         "parse_mode": "Markdown"
     }
+    
+    # Agregar botón táctil fijo "P"
+    if incluir_teclado:
+        payload["reply_markup"] = {
+            "keyboard": [[{"text": "P"}]],
+            "resize_keyboard": True,
+            "one_time_keyboard": False
+        }
+        
     try:
         requests.post(url, json=payload, timeout=5)
     except Exception as e:
@@ -148,17 +157,23 @@ def webhook():
         chat_id = chat.get('id')
         texto_msg = data['message'].get('text', '').strip()
         
-        if texto_msg != '':
-            print("--> Ejecutando barrido de tráfico...")
+        if texto_msg.lower() == '/start':
+            enviar_mensaje_telegram(
+                chat_id, 
+                "🤖 **Kitt activado.** Presiona el botón **P** a continuación para iniciar el barrido de tráfico en las 82 fuentes.",
+                incluir_teclado=True
+            )
+        elif texto_msg != '':
+            print("--> Ejecutando barrido de tráfico por demanda...")
             resultados = ejecutar_barrido_trafico()
             
             if not resultados:
-                respuesta = "SIN NOVEDADES"
+                respuesta = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
             else:
-                respuesta = "\n".join(resultados)
+                respuesta = "⚠️ **NOVEDADES DETECTADAS:**\n\n" + "\n".join(resultados)
                 
             if chat_id:
-                enviar_mensaje_telegram(chat_id, respuesta)
+                enviar_mensaje_telegram(chat_id, respuesta, incluir_teclado=True)
     
     return "OK", 200
 
@@ -180,10 +195,8 @@ def configurar_webhook_automatico():
         except Exception as e:
             print(f"-> Error configurando webhook automáticamente: {e}")
 
-# Configurar webhook al arrancar la app
 configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
