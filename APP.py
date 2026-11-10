@@ -150,7 +150,6 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
-    configurar_webhook_automatico()
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
@@ -181,8 +180,9 @@ def webhook():
             
     return "OK", 200
 
+# Ejecutamos el diagnóstico inmediatamente al arrancar el script principal
+configurar_webhook_automatico()
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
-
