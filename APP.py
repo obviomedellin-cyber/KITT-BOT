@@ -6,12 +6,16 @@ from datos import BASE_DATOS_AZULES, VALLE_ABURRA
 app = Flask(__name__)
 
 PORT = int(os.environ.get("PORT", "10000"))
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "9084832898:AAGQCqGvBrtNRy9kQ34QnLlrSYUUEBsG7x8")
+TOKEN = "9084832898:AAGQCqGvBrtNRy9kQ34QnLlrSYUUEBsG7x8"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", TOKEN)
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
 def enviar_mensaje(chat_id, texto):
     url = f"{TELEGRAM_API_URL}/sendMessage"
-    payload = {"chat_id": chat_id, "text": texto}
+    payload = {
+        "chat_id": chat_id,
+        "text": texto
+    }
     try:
         requests.post(url, json=payload)
     except Exception as e:
@@ -19,29 +23,29 @@ def enviar_mensaje(chat_id, texto):
 
 @app.route("/")
 def home():
-    total_fuentes = len(BASE_DATOS_AZULES)
-    total_valle = len(VALLE_ABURRA)
-    return f"KITT-BOT is online and operational! Fuentes cargadas: {total_fuentes} | Filtros Valle: {total_valle}", 200
+    tf = len(BASE_DATOS_AZULES)
+    tv = len(VALLE_ABURRA)
+    return f"KITT-BOT online! Fuentes: {tf} | Valle: {tv}", 200
 
 @app.route("/webhook", methods=["POST"])
 def telegram_webhook():
     data = request.get_json()
     if data and "message" in data:
-        message = data["message"]
-        chat_id = message["chat"].get("id")
-        texto_usuario = message.get("text", "")
+        msg = data["message"]
+        chat_id = msg["chat"].get("id")
+        txt = msg.get("text", "")
 
-        if texto_usuario.startswith("/start"):
-            respuesta = (
+        if txt.startswith("/start"):
+            resp = (
                 "¡Hola, Raúl! KITT-BOT en línea.\n"
-                f"📊 Fuentes cargadas: {len(BASE_DATOS_AZULES)}\n"
-                f"📍 Filtros Valle de Aburrá: {len(VALLE_ABURRA)}\n"
-                "Listo para monitorear la movilidad y datos."
+                f"📊 Fuentes: {len(BASE_DATOS_AZULES)}\n"
+                f"📍 Filtros Valle: {len(VALLE_ABURRA)}\n"
+                "Listo para operar."
             )
         else:
-            respuesta = f"KITT-BOT recibió tu reporte: '{texto_usuario}'. Procesando con los datos activos..."
+            resp = f"KITT-BOT procesando: '{txt}'"
 
-        enviar_mensaje(chat_id, respuesta)
+        enviar_mensaje(chat_id, resp)
 
     return "OK", 200
 
