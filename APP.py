@@ -132,7 +132,6 @@ def ejecutar_barrido_trafico():
                 contenido = response.text
                 print(f"-> Tamaño contenido: {len(contenido)} caracteres")
                 
-                # Filtro de palabras clave para movilidad y tráfico
                 if any(palabra in contenido.lower() for palabra in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "mobilidad", "movilidad"]):
                     novedades_capturadas.add(f"Alerta en fuente: {fuente}")
             else:
@@ -150,34 +149,35 @@ def webhook():
     print(f"--> WEBHOOK RECIBIDO: {data}")
     
     if data and 'message' in data:
-        chat_id = data['message']['chat']['id']
+        chat = data['message'].get('chat', {})
+        chat_id = chat.get('id')
         texto_msg = data['message'].get('text', '').strip()
-        print(f"--> Texto extraído del mensaje: '{texto_msg}'")
+        print(f"--> Texto extraído: '{texto_msg}' de chat_id: {chat_id}")
         
-        if texto_msg.upper() == 'P':
-            print("--> Comando 'P' RECONOCIDO. Iniciando escaneo de 82 fuentes...")
+        if texto_msg != '':
+            print("--> Ejecutando barrido de tráfico...")
             resultados = ejecutar_barrido_trafico()
             
             if not resultados:
                 respuesta = "SIN NOVEDADES"
-                print("--> Resultado a enviar: SIN NOVEDADES")
             else:
                 respuesta = "\n".join(resultados)
-                print(f"--> Enviando {len(resultados)} novedades encontradas.")
                 
-            enviar_mensaje_telegram(chat_id, respuesta)
-        else:
-            print(f"--> El mensaje '{texto_msg}' no coincidió con el comando 'P'.")
-    else:
-        print("--> El evento recibido no contiene la estructura de un mensaje de texto.")
-            
+            if chat_id:
+                enviar_mensaje_telegram(chat_id, respuesta)
+    
     return "OK", 200
 
 @app.route('/', methods=['GET'])
 def home():
-    return "KITT-BOT Traffic Monitoring Online!", 200
+    # Ahora la ruta principal ejecuta directamente el barrido al entrar desde el navegador
+    resultados = ejecutar_barrido_trafico()
+    if not resultados:
+        return "KITT-BOT: Barrido completado. SIN NOVEDADES en las 82 fuentes.", 200
+    else:
+        return f"KITT-BOT: Barrido completado. Novedades encontradas:<br>{'<br>'.join(resultados)}", 200
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
+    
