@@ -50,13 +50,14 @@ def webhook():
   ahora_bogota = datetime.now(bogota_tz)
   hora_legal_str = ahora_bogota.strftime("%I:%M %p")
 
+  url_api = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+
   # Comando /start o saludo inicial
   if texto.lower() in ["/start", "hola"]:
     respuesta = (
         f"¡Hola, Raúl! KITT-BOT en línea.\n📊 Fuentes: 82\n📍 Filtros Valle:"
         " 52\nListo para operar."
     )
-    url_api = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url_api, json={"chat_id": chat_id, "text": respuesta})
 
   # Procesar comando P (Reporte Total Unificado Valle de Aburrá)
@@ -68,12 +69,11 @@ def webhook():
           " Consulte más tarde."
       )
     else:
-      # Aquí puedes integrar tus fuentes de datos filtradas a < 60 minutos
+      # Lógica de fuentes y semáforos (🔴 > 🟡 > ⚫ > 🟢)
       secciones_con_novedad = []
 
-      # Ejemplo con prioridad de semáforo: 🔴 > 🟡 > ⚫ > 🟢
+      # Ejemplo de validación de prueba (puedes integrar tus datos aquí)
       # secciones_con_novedad.append("🔴 Movilidad: Novedad crítica en la vía.")
-      # secciones_con_novedad.append("🟡 Metro: Alta afluencia.")
 
       if not secciones_con_novedad:
         respuesta = f"🕒 {hora_legal_str}\nSIN NOVEDADES"
@@ -84,7 +84,6 @@ def webhook():
             f" {hora_legal_str}\n\n{cuerpo_reporte}"
         )
 
-    url_api = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     requests.post(url_api, json={"chat_id": chat_id, "text": respuesta})
 
   return "OK", 200
@@ -92,4 +91,4 @@ def webhook():
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000)
-      
+    
