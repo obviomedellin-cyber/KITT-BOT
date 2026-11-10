@@ -4,6 +4,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+# Se lee de forma segura desde las variables de entorno de Render
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
@@ -94,21 +95,6 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
-def configurar_webhook_automatico():
-    try:
-        print("=========================================", flush=True)
-        print("--- INICIANDO DIAGNÓSTICO DE KITT ---", flush=True)
-        if not TELEGRAM_TOKEN:
-            print("-> [ERROR FATAL] TELEGRAM_TOKEN está VACÍO en Render.", flush=True)
-            print("=========================================", flush=True)
-            return
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
-        res = requests.get(url, timeout=5)
-        print(f"-> RESPUESTA EXACTA DE TELEGRAM: {res.text}", flush=True)
-        print("=========================================", flush=True)
-    except Exception as e:
-        print(f"-> EXCEPCIÓN EN WEBHOOK: {e}", flush=True)
-
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         return
@@ -144,6 +130,13 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
+    # Configura automáticamente el webhook al recibir la primera petición o verificación
+    try:
+        if TELEGRAM_TOKEN:
+            url_wh = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+            requests.get(url_wh, timeout=3)
+    except Exception:
+        pass
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
@@ -151,10 +144,12 @@ def webhook():
     data = request.get_json(force=True, silent=True) or request.form.to_dict()
     chat_id = None
     texto_msg = ""
+    
     if data and 'message' in data:
         msg = data['message']
         chat_id = msg.get('chat', {}).get('id')
         texto_msg = msg.get('text', '').strip()
+    
     if chat_id:
         if texto_msg.lower() == '/start':
             enviar_mensaje_telegram(
@@ -169,9 +164,8 @@ def webhook():
             else:
                 resp = "⚠️ **NOVEDADES DETECTADAS:**\n\n" + "\n".join(resultados)
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
+            
     return "OK", 200
-
-configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
