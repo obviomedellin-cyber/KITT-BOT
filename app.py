@@ -123,15 +123,18 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
 
 def ejecutar_barrido_trafico():
     novedades = []
+    palabras_clave = ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "movilidad"]
+    
     for fuente in FUENTES_ABURRA:
         try:
-            res = requests.get(fuente, headers={'User-Agent': 'Mozilla/5.0'}, timeout=2)
+            res = requests.get(fuente, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=3)
             if res.status_code == 200:
                 c = res.text.lower()
-                if any(p in c for p in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "movilidad"]):
-                    novedades.append(f"Alerta: {fuente}")
+                if any(p in c for p in palabras_clave):
+                    novedades.append(f"⚠️ Alerta en fuente: {fuente}")
         except Exception:
             pass
+            
     # Mostramos los reportes más recientes primero
     return list(reversed(novedades))
 
