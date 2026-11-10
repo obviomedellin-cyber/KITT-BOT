@@ -97,7 +97,6 @@ FUENTES_ABURRA = [
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
-        print("-> [ERROR] No se puede enviar mensaje: TELEGRAM_TOKEN no está definido.", flush=True)
         return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
@@ -112,10 +111,9 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
             "one_time_keyboard": False
         }
     try:
-        res = requests.post(url, json=payload, timeout=5)
-        print(f"-> Resultado envío Telegram: {res.status_code} | {res.text}", flush=True)
-    except Exception as e:
-        print(f"-> Excepción enviando mensaje: {e}", flush=True)
+        requests.post(url, json=payload, timeout=5)
+    except Exception:
+        pass
 
 def ejecutar_barrido_trafico():
     novedades = []
@@ -133,20 +131,11 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
-    if TELEGRAM_TOKEN:
-        try:
-            url_wh = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
-            r = requests.get(url_wh, timeout=3)
-            print(f"-> Webhook auto-registrado desde raíz: {r.text}", flush=True)
-        except Exception as e:
-            print(f"-> Error auto-registrando webhook: {e}", flush=True)
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(force=True, silent=True) or request.form.to_dict()
-    print(f"-> PETICIÓN WEBHOOK RECIBIDA: {data}", flush=True)
-    
     chat_id = None
     texto_msg = ""
     
@@ -167,7 +156,7 @@ def webhook():
             if not resultados:
                 resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
             else:
-                resp = "⚠️ **NOVEDADES DETECTADAS:**\n\n" + "\n".join(resultados)
+                resp = "⚠️ **NOVEDADES DETECTADAS (Más recientes primero):**\n\n" + "\n".join(resultados)
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
