@@ -107,6 +107,9 @@ def configurar_webhook_automatico():
     except Exception as e:
         print(f"-> Error autoconfigurando webhook: {e}")
 
+# Se ejecuta al importar el módulo (ideal para Gunicorn en Render)
+configurar_webhook_automatico()
+
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         print("-> Error: No se puede enviar mensaje porque falta TELEGRAM_TOKEN.")
@@ -180,7 +183,5 @@ def webhook():
     return "OK", 200
 
 if __name__ == '__main__':
-    configurar_webhook_automatico()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
