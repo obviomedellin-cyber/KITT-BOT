@@ -4,8 +4,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token oficial leído de forma segura desde las variables de entorno de Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+# Token oficial y definitivo de tu bot KittValleDeAburraBot
+TELEGRAM_TOKEN = "9072501655:AAEL1v7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 
 # Lista completa de las 82 fuentes del Valle de Aburrá
 FUENTES_ABURRA = [
@@ -105,8 +105,6 @@ FUENTES_ABURRA = [
 ]
 
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
-    if not TELEGRAM_TOKEN:
-        return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -114,7 +112,6 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
         "parse_mode": "Markdown"
     }
     
-    # Agregar botón táctil fijo "P"
     if incluir_teclado:
         payload["reply_markup"] = {
             "keyboard": [[{"text": "P"}]],
@@ -160,7 +157,7 @@ def webhook():
         if texto_msg.lower() == '/start':
             enviar_mensaje_telegram(
                 chat_id, 
-                "🤖 **Kitt activado.** Presiona el botón **P** a continuación para iniciar el barrido de tráfico en las 82 fuentes.",
+                "🤖 **Kitt activado.** Presiona el botón **P** abajo en tu pantalla para iniciar el barrido de tráfico en las 82 fuentes.",
                 incluir_teclado=True
             )
         elif texto_msg != '':
@@ -186,17 +183,17 @@ def home():
         return f"KITT-BOT: Barrido completado. Novedades encontradas:<br>{'<br>'.join(resultados)}", 200
 
 def configurar_webhook_automatico():
-    if TELEGRAM_TOKEN:
-        url_webhook = "https://kitt-bot.onrender.com/webhook"
-        url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
-        try:
-            resp = requests.get(url_telegram, timeout=5)
-            print(f"-> Autoconfiguración de Webhook: {resp.text}")
-        except Exception as e:
-            print(f"-> Error configurando webhook automáticamente: {e}")
+    url_webhook = "https://kitt-bot.onrender.com/webhook"
+    url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
+    try:
+        resp = requests.get(url_telegram, timeout=5)
+        print(f"-> Autoconfiguración de Webhook: {resp.text}")
+    except Exception as e:
+        print(f"-> Error configurando webhook automáticamente: {e}")
 
 configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
+    
