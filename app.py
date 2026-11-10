@@ -4,8 +4,8 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Se lee de forma segura desde las variables de entorno de Render
-TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+# Token oficial de Telegram y URL externa de Render
+TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
 FUENTES_ABURRA = [
@@ -95,9 +95,15 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
+def configurar_webhook_automatico():
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+        res = requests.get(url, timeout=5)
+        print(f"-> AUTOREGISTRO WEBHOOK TELEGRAM: {res.text}", flush=True)
+    except Exception as e:
+        print(f"-> EXCEPCIÓN AL REGISTRAR WEBHOOK: {e}", flush=True)
+
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
-    if not TELEGRAM_TOKEN:
-        return
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {
         "chat_id": chat_id,
@@ -131,11 +137,14 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
+    configurar_webhook_automatico()
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(force=True, silent=True) or request.form.to_dict()
+    print(f"-> WEBHOOK RECIBIDO: {data}", flush=True)
+    
     chat_id = None
     texto_msg = ""
     
@@ -160,6 +169,9 @@ def webhook():
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
+
+# Configuramos el webhook al arrancar
+configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
