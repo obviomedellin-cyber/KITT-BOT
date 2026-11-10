@@ -5,6 +5,7 @@ from flask import Flask, request
 app = Flask(__name__)
 
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
 FUENTES_ABURRA = [
     "https://nitter.privacydev.net/AlcaldiaMed",
@@ -93,6 +94,15 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
+def configurar_webhook_automatico():
+    if TELEGRAM_TOKEN:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+        try:
+            res = requests.get(url, timeout=5)
+            print(f"-> Autoconfiguración de Webhook: {res.text}")
+        except Exception as e:
+            print(f"-> Error autoconfigurando webhook: {e}")
+
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         return
@@ -164,6 +174,7 @@ def webhook():
     return "OK", 200
 
 if __name__ == '__main__':
+    configurar_webhook_automatico()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
         
