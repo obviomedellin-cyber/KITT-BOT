@@ -8,7 +8,7 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
-# Las 84 fuentes completas de movilidad, tráfico y emergencias del Valle de Aburrá
+# Totalidad de las 84 fuentes integradas de movilidad, tráfico y emergencias del Valle de Aburrá
 FUENTES_ABURRA = [
     "https://nitter.privacydev.net/AlcaldiaMed",
     "https://nitter.privacydev.net/TransitoMedellin",
@@ -136,14 +136,22 @@ def ejecutar_barrido_trafico():
         "activo", "activos", "siniestro"
     ]
     
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
+    
     for fuente in FUENTES_ABURRA:
         try:
-            res = requests.get(fuente, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}, timeout=3)
+            res = requests.get(fuente, headers=headers, timeout=3)
+            print(f"[Pipeline] Nodo {fuente} - Status: {res.status_code}", flush=True)
             if res.status_code == 200:
-                c = res.text.lower()
-                if any(p in c for p in palabras_clave):
-                    novedades.append(f"⚠️ Alerta en fuente: {fuente}")
-        except Exception:
+                contenido = res.text.lower()
+                for keyword in palabras_clave:
+                    if keyword in contenido:
+                        novedades.append(f"⚠️ **Alerta detectada:** Match con `{keyword}` en fuente oficial.")
+                        break
+        except Exception as e:
+            print(f"[Pipeline Error] {fuente}: {e}", flush=True)
             pass
             
     # Mostramos los reportes más recientes primero
@@ -191,6 +199,5 @@ configurar_webhook_automatico()
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
 
 # Fin de la aplicación Flask de Kitt para el Valle de Aburrá
