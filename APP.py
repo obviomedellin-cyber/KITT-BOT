@@ -81,34 +81,25 @@ NOVEDADES_CACHE = []
 
 
 def esta_en_ventana_operativa():
-  """Valida si la hora actual se encuentra dentro de las ventanas de trabajo
-
-  del conductor.
-  """
   ahora = datetime.now(bogota_tz)
-  dia_semana = ahora.weekday()  # 0: Lun, 1: Mar, ..., 4: Vie, 5: Sáb, 6: Dom
+  dia_semana = ahora.weekday()
   hora = ahora.hour
   minuto = ahora.minute
   hora_decimal = hora + minuto / 60.0
 
-  # Viernes (4) y Sábado (5): 7:00 p.m. (19:00) a 5:00 a.m. del día siguiente
-  if dia_semana == 4 or dia_semana == 5:
+  if dia_semana == 4 or dia_semana == 5:  # Vie / Sáb
     if hora_decimal >= 19.0 or hora_decimal < 5.0:
       return True
-  # Domingo (6): 5:00 p.m. (17:00) a 12:00 a.m. (24:00)
-  elif dia_semana == 6:
+  elif dia_semana == 6:  # Dom
     if 17.0 <= hora_decimal <= 24.0:
       return True
-    # Lunes a Jueves (0 a 3): 1:00 p.m. (13:00) a 10:00 p.m. (22:00)
-  elif 0 <= dia_semana <= 3:
+  elif 0 <= dia_semana <= 3:  # Lun-Jue
     if 13.0 <= hora_decimal <= 22.0:
       return True
-
   return False
 
 
-def realizar_barrido_sincrono():
-  """Ejecución síncrona robusta para evitar bloqueos de bucle en Render."""
+def tarea_cron():
   global NOVEDADES_CACHE
   if not esta_en_ventana_operativa():
     return
@@ -116,7 +107,6 @@ def realizar_barrido_sincrono():
   hallazgos = []
   headers = {"User-Agent": "Mozilla/5.0"}
 
-  # Barrido rápido de Fuentes RSS locales (ej. Minuto30 / Alerta Paisa)
   for url_rss in FEEDS_RSS_LOCALES:
     try:
       resp = requests.get(url_rss, headers=headers, timeout=3)
@@ -133,7 +123,6 @@ def realizar_barrido_sincrono():
     except Exception:
       pass
 
-  # Barrido de Cuentas oficiales a través de Nitter
   for cuenta in CUENTAS_X_OFICIALES:
     try:
       url = f"https://nitter.privacydev.net/{cuenta}"
@@ -148,17 +137,12 @@ def realizar_barrido_sincrono():
       pass
 
   if hallazgos:
-    NOVEDADES_CACHE = list(set(hallazgos))  # Evitar duplicados
+    NOVEDADES_CACHE = list(set(hallazgos))
 
 
-# Configurar crons independientes en segundo plano (minutos 15 y 45 de cada hora)
+# Configurar planificador de crons a los minutos 15 y 45
 scheduler = BackgroundScheduler(daemon=True)
-scheduler.add_job(
-    realizar_barrido_sincrono,
-    "cron",
-    minute="15,45",
-    id="cron_independientes",
-)
+scheduler.add_job(tarea_cron, "cron", minute="15,45", id="cron_job")
 scheduler.start()
 
 
@@ -174,11 +158,13 @@ def webhook():
   url_api = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
 
   if texto.lower() in ["/start", "hola"]:
-    respuesta = (
-        f"¡Hola, Raúl! KITT-BOT en línea.\n📊 Fuentes: 82\n📍 Filtros Valle:"
-        " 52\n🕒 Crons y Comando P independientes listos."
+    requests.post(
+        url_api,
+        json={
+            "chat_id": chat_id,
+            "text": "¡Hola, Raúl! KITT-BOT operando con éxito.",
+        },
     )
-    requests.post(url_api, json={"chat_id": chat_id, "text": respuesta})
 
   elif texto.upper() == "P" or texto.lower() == "/p":
     if not esta_en_ventana_operativa():
