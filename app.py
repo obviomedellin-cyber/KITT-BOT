@@ -95,6 +95,15 @@ FUENTES_ABURRA = [
     "https://nitter.privacydev.net/ControlVialMed"
 ]
 
+def registrar_webhook():
+    if TELEGRAM_TOKEN:
+        try:
+            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
+            res = requests.get(url, timeout=5)
+            print(f"=== WEBHOOK REGISTRADO EN TELEGRAM: {res.text} ===", flush=True)
+        except Exception as e:
+            print(f"=== ERROR AL REGISTRAR WEBHOOK: {e} ===", flush=True)
+
 def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     if not TELEGRAM_TOKEN:
         return
@@ -130,13 +139,6 @@ def ejecutar_barrido_trafico():
 
 @app.route('/', methods=['GET'])
 def home():
-    # Configura automáticamente el webhook al recibir la primera petición o verificación
-    try:
-        if TELEGRAM_TOKEN:
-            url_wh = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={RENDER_EXTERNAL_URL}/webhook"
-            requests.get(url_wh, timeout=3)
-    except Exception:
-        pass
     return "KITT-BOT Valle de Aburrá Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
@@ -166,6 +168,9 @@ def webhook():
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
+
+# Registramos el webhook justo al cargar el script en Gunicorn/Flask
+registrar_webhook()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
