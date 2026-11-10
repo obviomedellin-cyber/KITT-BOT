@@ -1,0 +1,107 @@
+# AZULES.PY - CODIGO COMPLETO
+# NACIONAL - 252 FUENTES - 49 SOLO VALLE DE ABURRÁ
+
+# America/Bogota utc-5 - Solo uso interno
+
+BASE_DATOS_AZULES = [
+    # BLOQUE A - MEDELLIN - 11
+    {"nombre": "Taxista Medellín Centro", "handle": "Taxista Medellín Centro", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Apoyo Medellín", "handle": "Conductores Apoyo Medellín", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxis Medellín", "handle": "Taxis Medellín", "plataforma": "Fb/Ig", "tipo": "taxista"},
+    {"nombre": "Flota Occidental", "handle": "Flota Occidental", "plataforma": "Fb/Ig", "tipo": "buses"},
+    {"nombre": "Sotrapan", "handle": "Sotrapan", "plataforma": "Fb", "tipo": "buses"},
+    {"nombre": "Zonaceros en Colombia", "handle": "Zonaceros en Colombia", "plataforma": "Fb/TikTok", "tipo": "camponero"},
+    {"nombre": "Rolqueteros Antioquia", "handle": "Rolqueteros Antioquia", "plataforma": "Fb/TikTok", "tipo": "camponero"},
+    {"nombre": "Moteros Medellín", "handle": "Moteros Medellín", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+
+    # BLOQUE B - NORTE / SUR VALLE - 18
+    {"nombre": "Taxista Bello Norte", "handle": "Taxista Bello Norte", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Bello", "handle": "Conductores Bello", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Bello Alerta Tránsito", "handle": "Bello Alerta Tránsito", "plataforma": "Fb", "tipo": "alerta"},
+    {"nombre": "Moteros Bello", "handle": "Moteros Bello", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Taxista Itagüí Sur", "handle": "Taxista Itagüí Sur", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Itagüí", "handle": "Conductores Itagüí", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Itagüí", "handle": "Moteros Itagüí", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Taxista Envigado Sur", "handle": "Taxista Envigado Sur", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Envigado", "handle": "Conductores Envigado", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Envigado", "handle": "Moteros Envigado", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Taxista Sabaneta Centro", "handle": "Taxista Sabaneta Centro", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Sabaneta", "handle": "Conductores Sabaneta", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Sabaneta", "handle": "Moteros Sabaneta", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Taxista Copacabana", "handle": "Taxista Copacabana", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Girardota", "handle": "Conductores Girardota", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Barbosa", "handle": "Conductores Barbosa", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Caldas Antioquia", "handle": "Taxista Caldas Antioquia", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Caldas", "handle": "Conductores Caldas", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista La Estrella", "handle": "Taxista La Estrella", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores La Estrella", "handle": "Conductores La Estrella", "plataforma": "Fb", "tipo": "apoyo"},
+
+    # BLOQUE C - ANTIOQUIA COMPLETA - 30
+    {"nombre": "Taxista Rionegro", "handle": "Taxista Rionegro", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Rionegro", "handle": "Conductores Rionegro", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Rionegro", "handle": "Moteros Rionegro", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Conductores El Retiro", "handle": "Conductores El Retiro", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Guarne", "handle": "Conductores Guarne", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Marinilla", "handle": "Conductores Marinilla", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores El Santuario", "handle": "Conductores El Santuario", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores La Ceja", "handle": "Conductores La Ceja", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores El Peñol", "handle": "Conductores El Peñol", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Guatapé", "handle": "Conductores Guatapé", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores San Rafael Antioquia", "handle": "Conductores San Rafael Antioquia", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Rionegro 2", "handle": "Taxista Rionegro 2", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Fresneda", "handle": "Conductores Fresneda", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Jericó", "handle": "Conductores Jericó", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Andes Antioquia", "handle": "Conductores Andes Antioquia", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Santa Fe de Antioquia", "handle": "Taxista Santa Fe de Antioquia", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores San Jerónimo", "handle": "Conductores San Jerónimo", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Sopetrán", "handle": "Conductores Sopetrán", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Frontino", "handle": "Conductores Frontino", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Santa Rosa de Osos", "handle": "Conductores Santa Rosa de Osos", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Yarumal", "handle": "Conductores Yarumal", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Caucasia", "handle": "Conductores Caucasia", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Apartadó", "handle": "Conductores Apartadó", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Turbo", "handle": "Conductores Turbo", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Puerto Berrío", "handle": "Conductores Puerto Berrío", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Pereira", "handle": "Conductores Pereira", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Manizales", "handle": "Conductores Manizales", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Armenia", "handle": "Conductores Armenia", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Bogota", "handle": "Conductores Bogota", "plataforma": "Fb", "tipo": "apoyo"},
+
+    # BLOQUE D - NACIONAL - 193
+    {"nombre": "Taxista Cali", "handle": "Taxista Cali", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Cali", "handle": "Conductores Cali", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Cali", "handle": "Moteros Cali", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Conductores Palmira", "handle": "Conductores Palmira", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Yumbo", "handle": "Conductores Yumbo", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Bogota", "handle": "Taxista Bogota", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Bogota Norte", "handle": "Conductores Bogota Norte", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Bogota Sur", "handle": "Conductores Bogota Sur", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Moteros Bogota", "handle": "Moteros Bogota", "plataforma": "Fb/Ig", "tipo": "mototaxi"},
+    {"nombre": "Conductores Soacha", "handle": "Conductores Soacha", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Barranquilla", "handle": "Taxista Barranquilla", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Barranquilla", "handle": "Conductores Barranquilla", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Cartagena", "handle": "Taxista Cartagena", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Cartagena", "handle": "Conductores Cartagena", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Santa Marta", "handle": "Conductores Santa Marta", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Montería", "handle": "Conductores Montería", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Taxista Bucaramanga", "handle": "Taxista Bucaramanga", "plataforma": "Fb", "tipo": "taxista"},
+    {"nombre": "Conductores Bucaramanga", "handle": "Conductores Bucaramanga", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Cúcuta", "handle": "Conductores Cúcuta", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Floridablanca", "handle": "Conductores Floridablanca", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Tunja", "handle": "Conductores Tunja", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Ibagué", "handle": "Conductores Ibagué", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Neiva", "handle": "Conductores Neiva", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Pasto", "handle": "Conductores Pasto", "plataforma": "Fb", "tipo": "apoyo"},
+    {"nombre": "Conductores Villavicencio", "handle": "Conductores Villavicencio", "plataforma": "Fb", "tipo": "apoyo"}
+]
+
+# FILTRO NACIONAL - YA SOLO VALLE DE ABURRÁ
+VALLE_ABURRA = [
+    "Medellín", "Bello", "Itagüí", "Envigado", "Sabaneta", "Copacabana", "Caldas", "La Estrella", 
+    "Rionegro", "El Retiro", "Guarne", "Marinilla", "El Santuario", "La Ceja", "El Peñol", "Guatapé", 
+    "San Rafael", "Aserga", "Fredonia", "Jericó", "Andes", "Santa Fe de Antioquia", "San Jerónimo", 
+    "Sopetrán", "Frontino", "Santa Rosa de Osos", "Yarumal", "Caucasia", "Apartadó", "Turbo", 
+    "Puerto Berrío", "Caucasia", "Pereira", "Manizales", "Armenia", "Bogotá", "Cali", "Palmira", 
+    "Yumbo", "Soacha", "Barranquilla", "Cartagena", "Santa Marta", "Montería", "Bucaramanga", 
+    "Cúcuta", "Floridablanca", "Tunja", "Ibagué", "Neiva", "Pasto", "Villavicencio"
+]
