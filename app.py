@@ -8,92 +8,32 @@ app = Flask(__name__)
 TELEGRAM_TOKEN = "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA"
 RENDER_EXTERNAL_URL = "https://kitt-bot.onrender.com"
 
-# Totalidad de las 84 fuentes integradas de movilidad, tráfico y emergencias del Valle de Aburrá
-FUENTES_ABURRA = [
-    "https://nitter.privacydev.net/AlcaldiaMed",
-    "https://nitter.privacydev.net/TransitoMedellin",
-    "https://nitter.privacydev.net/DAGRDMedellin",
-    "https://nitter.privacydev.net/Areametropol",
-    "https://nitter.privacydev.net/MetroMedellin",
-    "https://nitter.privacydev.net/MedellinResponde",
-    "https://nitter.privacydev.net/SecMovilidadMed",
-    "https://nitter.privacydev.net/CulturaTransito",
-    "https://nitter.privacydev.net/GobAntioquia",
-    "https://nitter.privacydev.net/SecSeguridadMed",
-    "https://nitter.privacydev.net/BomberosMed",
-    "https://nitter.privacydev.net/Ruta40_Med",
-    "https://nitter.privacydev.net/PoliciaMedellin",
-    "https://nitter.privacydev.net/TransitPolicia",
-    "https://nitter.privacydev.net/EmergenciasMed",
-    "https://nitter.privacydev.net/MovilidadAnt",
-    "https://nitter.privacydev.net/Devimed",
-    "https://nitter.privacydev.net/ConvisaVias",
-    "https://nitter.privacydev.net/AutopistasCafe",
-    "https://nitter.privacydev.net/Coviandes",
-    "https://nitter.privacydev.net/ViasAmericas",
-    "https://nitter.privacydev.net/ConcesionAburra",
-    "https://nitter.privacydev.net/TusViasAntioquia",
-    "https://nitter.privacydev.net/Inviias",
-    "https://nitter.privacydev.net/RedVialNal",
-    "https://nitter.privacydev.net/AlcaldiaBarbosa",
-    "https://nitter.privacydev.net/TransitoBarbosa",
-    "https://nitter.privacydev.net/AlcaldiaGirardota",
-    "https://nitter.privacydev.net/TransitoGirardota",
-    "https://nitter.privacydev.net/AlcaldiaCopa",
-    "https://nitter.privacydev.net/TransitoCopa",
-    "https://nitter.privacydev.net/AlcaldiaBello",
-    "https://nitter.privacydev.net/SecMovilidadBello",
-    "https://nitter.privacydev.net/BomberosBello",
-    "https://nitter.privacydev.net/AlcaldiaItagui",
-    "https://nitter.privacydev.net/MovilidadItagui",
-    "https://nitter.privacydev.net/AlcaldiaEnvigado",
-    "https://nitter.privacydev.net/MovilidadEnviga",
-    "https://nitter.privacydev.net/AlcaldiaSabaneta",
-    "https://nitter.privacydev.net/TransitoSaba",
-    "https://nitter.privacydev.net/AlcaldiaEstrella",
-    "https://nitter.privacydev.net/TransitoEstrella",
-    "https://nitter.privacydev.net/AlcaldiaCaldasAnt",
-    "https://nitter.privacydev.net/TransitoCaldas",
-    "https://nitter.privacydev.net/DenunciasAntio2",
-    "https://nitter.privacydev.net/GuardianesMed",
-    "https://nitter.privacydev.net/AlertaMedellin",
-    "https://nitter.privacydev.net/MobilityMedellin",
-    "https://nitter.privacydev.net/NoticiasTelemed",
-    "https://nitter.privacydev.net/Teleantioquia",
-    "https://nitter.privacydev.net/Hora13Noticias",
-    "https://nitter.privacydev.net/QHuboMedellin",
-    "https://nitter.privacydev.net/ElColombiano",
-    "https://nitter.privacydev.net/ElMundoMedellin",
-    "https://nitter.privacydev.net/Minuto30com",
-    "https://nitter.privacydev.net/BluRadioMed",
-    "https://nitter.privacydev.net/CaracolMedellin",
-    "https://nitter.privacydev.net/RCNRadioMed",
-    "https://nitter.privacydev.net/WRadioColombia",
-    "https://nitter.privacydev.net/Antena2Medellin",
-    "https://nitter.privacydev.net/TropicanaMed",
-    "https://nitter.privacydev.net/LaMegaMedellin",
-    "https://nitter.privacydev.net/FmMedellin",
-    "https://nitter.privacydev.net/LaFM_Medellin",
-    "https://nitter.privacydev.net/TeleMedellin",
-    "https://nitter.privacydev.net/Cosmovision",
-    "https://nitter.privacydev.net/CanalU",
-    "https://nitter.privacydev.net/TMVNoticias",
-    "https://nitter.privacydev.net/PrensaMedellin",
-    "https://nitter.privacydev.net/RedVialMed",
-    "https://nitter.privacydev.net/TraficoMedellin",
-    "https://nitter.privacydev.net/ReporteVialAnt",
-    "https://nitter.privacydev.net/CamarasMedellin",
-    "https://nitter.privacydev.net/SemáforosMed",
-    "https://nitter.privacydev.net/ObrasMedellin",
-    "https://nitter.privacydev.net/InviasAntioquia",
-    "https://nitter.privacydev.net/AeroMedellin",
-    "https://nitter.privacydev.net/ClimaMedellin",
-    "https://nitter.privacydev.net/SIATA_Medellin",
-    "https://nitter.privacydev.net/IdeamColombia",
-    "https://nitter.privacydev.net/CruzRojaAnt",
-    "https://nitter.privacydev.net/DefensaCivilAnt",
-    "https://nitter.privacydev.net/AidsMovilidad",
-    "https://nitter.privacydev.net/ControlVialMed"
+# Cuentas clave de gremios, conductores y reportes ciudadanos en el Valle de Aburrá
+PERFILES_OBJETIVO = [
+    "DenunciasAntio2",
+    "GuardianesMed",
+    "AlertaMedellin",
+    "TraficoMedellin",
+    "ReporteVialAnt",
+    "MoterosMedellin",
+    "TaxistasMed",
+    "ConduceMedellin",
+    "CamionerosAnt",
+    "TransporteMed",
+    "QHuboMedellin",
+    "Minuto30com",
+    "Hora13Noticias",
+    "MovilidadAnt",
+    "TransitoMedellin",
+    "RedVialMed",
+    "ControlVialMed"
+]
+
+# Múltiples instancias espejo de Nitter para evitar bloqueos y garantizar alta disponibilidad
+INSTANCIAS_NITTER = [
+    "https://nitter.privacydev.net",
+    "https://nitter.poast.org",
+    "https://nitter.catsarch.com"
 ]
 
 def configurar_webhook_automatico():
@@ -122,37 +62,48 @@ def enviar_mensaje_telegram(chat_id, texto, incluir_teclado=False):
     except Exception:
         pass
 
-def ejecutar_barrido_trafico():
+def ejecutar_barrido_multiespejo():
     novedades = []
     palabras_clave = [
-        "accidente", "reten", "cierre", "trancon", "congestion", "atropello", 
-        "volcado", "incendio", "caida arbol", "protesta", "bloqueo", "marcha", 
-        "fallecido", "heridos", "emergencia", "azules", "azulitos", "retenes", 
-        "Mega reten", "circo", "puesto de control", "gases", "Puntos", "tránsito", 
-        "alcoholemia", "puestos de control", "pitufos", "guarda", "guardas", "901", 
-        "muerto", "matado", "choque", "taco", "7 3", "parqueadero", "cierres programados", 
-        "persisten", "continúa", "sigue", "túnel", "oriente", "caliente", "vías cerradas", 
-        "vía cerrada", "balacera", "orden público", "zona roja", "no se mueve", 
-        "activo", "activos", "siniestro"
+        "reten", "retenes", "Mega reten", "puesto de control", "puestos de control", 
+        "azulitos", "pitufos", "azules", "guarda", "guardas", "tránsito", "alcoholemia", 
+        "901", "accidente", "cierre", "trancon", "congestion", "bloqueo", "taco", 
+        "vía cerrada", "vías cerradas", "siniestro", "protesta", "chocar", "choque",
+        "moteros", "taxistas", "platillos", "agentes"
     ]
     
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     }
     
-    for fuente in FUENTES_ABURRA:
-        try:
-            res = requests.get(fuente, headers=headers, timeout=3)
-            print(f"[Pipeline] Nodo {fuente} - Status: {res.status_code}", flush=True)
-            if res.status_code == 200:
-                contenido = res.text.lower()
-                for keyword in palabras_clave:
-                    if keyword in contenido:
-                        novedades.append(f"⚠️ **Alerta detectada:** Match con `{keyword}` en fuente oficial.")
-                        break
-        except Exception as e:
-            print(f"[Pipeline Error] {fuente}: {e}", flush=True)
-            pass
+    for perfil in PERFILES_OBJETIVO:
+        leido_exitosamente = False
+        
+        # Probamos de forma inteligente en diferentes espejos si uno falla o rechaza la conexión
+        for instancia in INSTANCIAS_NITTER:
+            if leido_exitosamente:
+                break
+            
+            target_url = f"{instancia}/{perfil}/rss"
+            try:
+                res = requests.get(target_url, headers=headers, timeout=3)
+                print(f"[Multi-Mirror] Nodo {target_url} -> Status: {res.status_code}", flush=True)
+                
+                if res.status_code == 200:
+                    contenido = res.text.lower()
+                    for keyword in palabras_clave:
+                        if keyword in contenido:
+                            novedades.append(f"🚨 **Alerta en @{perfil}:** Match con `{keyword}`")
+                            break
+                    leido_exitosamente = True
+                    break
+            except Exception as e:
+                # Si falla una instancia, pasamos silenciosamente a la siguiente del espejo
+                continue
+                
+        if not leido_exitosamente:
+            print(f"[Multi-Mirror Warning] No se pudo conectar con ningún espejo para @{perfil}", flush=True)
             
     # Mostramos los reportes más recientes primero
     return list(reversed(novedades))
@@ -160,7 +111,7 @@ def ejecutar_barrido_trafico():
 @app.route('/', methods=['GET'])
 def home():
     configurar_webhook_automatico()
-    return "KITT-BOT Valle de Aburrá Operativo", 200
+    return "KITT-BOT Multiespejo Gremios Operativo", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
@@ -179,26 +130,23 @@ def webhook():
         if texto_msg.lower() == '/start':
             enviar_mensaje_telegram(
                 chat_id, 
-                "🤖 **Kitt en línea.** Presiona el botón **P** abajo para ejecutar el barrido manual por demanda.",
+                "🤖 **Kitt (Sistema Multiespejo) en línea.** Presiona la **P** para buscar retenes y alertas viales.",
                 incluir_teclado=True
             )
         else:
             # Petición por demanda independiente de los cron jobs programados
-            resultados = ejecutar_barrido_trafico()
+            resultados = ejecutar_barrido_multiespejo()
             if not resultados:
-                resp = "🟢 **SIN NOVEDADES** en el Valle de Aburrá."
+                resp = "🟢 **SIN NOVEDADES REPORTADAS EN LA RED** (Espejos consultados sin coincidencias activas)."
             else:
-                resp = "⚠️ **NOVEDADES DETECTADAS (Más recientes primero):**\n\n" + "\n".join(resultados)
+                resp = "🚨 **ALERTAS DE CONDUCTORES Y GREMIOS (Más recientes primero):**\n\n" + "\n".join(resultados)
             enviar_mensaje_telegram(chat_id, resp, incluir_teclado=True)
             
     return "OK", 200
 
-# Configuramos el webhook al arrancar
 configurar_webhook_automatico()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
-
-# Fin de la aplicación Flask de Kitt para el Valle de Aburrá
+            
