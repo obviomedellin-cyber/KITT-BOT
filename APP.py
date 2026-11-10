@@ -4,7 +4,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# Token de tu bot de Telegram
+# Token de tu bot de Telegram leído desde las variables de entorno de Render
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "TU_TOKEN_AQUI")
 
 # Lista completa de las 82 fuentes del Valle de Aburrá
@@ -126,19 +126,12 @@ def ejecutar_barrido_trafico():
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
             response = requests.get(fuente, headers=headers, timeout=3)
             
-            print(f"-> Estado HTTP: {response.status_code}")
-            
             if response.status_code == 200:
                 contenido = response.text
-                print(f"-> Tamaño contenido: {len(contenido)} caracteres")
-                
                 if any(palabra in contenido.lower() for palabra in ["colisión", "trafico", "tráfico", "accidente", "vehicular", "bloqueo", "cierres", "mobilidad", "movilidad"]):
                     novedades_capturadas.add(f"Alerta en fuente: {fuente}")
-            else:
-                print(f"-> ALERTA: Código {response.status_code} en {fuente}")
-                
         except Exception as e:
-            print(f"-> ERROR/TIMEOUT en {fuente}: {e}")
+            pass
 
     print(f"--- FIN DEL BARRIDO. Novedades únicas encontradas: {len(novedades_capturadas)} ---")
     return list(novedades_capturadas)
@@ -152,7 +145,6 @@ def webhook():
         chat = data['message'].get('chat', {})
         chat_id = chat.get('id')
         texto_msg = data['message'].get('text', '').strip()
-        print(f"--> Texto extraído: '{texto_msg}' de chat_id: {chat_id}")
         
         if texto_msg != '':
             print("--> Ejecutando barrido de tráfico...")
@@ -170,14 +162,26 @@ def webhook():
 
 @app.route('/', methods=['GET'])
 def home():
-    # Ahora la ruta principal ejecuta directamente el barrido al entrar desde el navegador
     resultados = ejecutar_barrido_trafico()
     if not resultados:
         return "KITT-BOT: Barrido completado. SIN NOVEDADES en las 82 fuentes.", 200
     else:
         return f"KITT-BOT: Barrido completado. Novedades encontradas:<br>{'<br>'.join(resultados)}", 200
 
+def configurar_webhook_automatico():
+    if TELEGRAM_TOKEN and TELEGRAM_TOKEN != "TU_TOKEN_AQUI":
+        url_webhook = "https://kitt-bot.onrender.com/webhook"
+        url_telegram = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook?url={url_webhook}"
+        try:
+            resp = requests.get(url_telegram, timeout=5)
+            print(f"-> Autoconfiguración de Webhook: {resp.text}")
+        except Exception as e:
+            print(f"-> Error configurando webhook automáticamente: {e}")
+
+# Configurar webhook al arrancar la app en Render
+configurar_webhook_automatico()
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-    
+                            
