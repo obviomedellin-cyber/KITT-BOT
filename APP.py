@@ -180,7 +180,7 @@ def webhook():
             
     return "OK", 200
 
-# Ejecutamos el diagnóstico al arrancar el proceso
+# Ejecutamos el diagnóstico al arrancar
 configurar_webhook_automatico()
 
 if __name__ == '__main__':
