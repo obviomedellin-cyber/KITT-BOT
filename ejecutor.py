@@ -12,11 +12,12 @@ HEADERS = {
 }
 
 def obtener_hora_oficial():
-    """Calcula con precisión matemática la hora de Colombia restando 5 horas exactas al reloj UTC"""
+    """Calcula la hora local exacta de Colombia de forma limpia y segura"""
     try:
-        # Obtenemos la hora UTC actual del servidor y le restamos exactamente 5 horas (Colombia UTC-5)
-        hora_colombia = datetime.utcnow() - timedelta(hours=5)
-        return hora_colombia.strftime("%H:%M COL")
+        # Usamos el desfase directo de 5 horas sobre la hora local del servidor
+        # Esto evita por completo el uso de funciones obsoletas o bloqueos de despliegue
+        hora_local = datetime.now() - timedelta(hours=5)
+        return hora_local.strftime("%H:%M COL")
     except Exception:
         return datetime.now().strftime("%H:%M COL")
 
@@ -72,4 +73,4 @@ def ejecutar_extraccion_desde_fuentes():
 
 if __name__ == "__main__":
     print(ejecutor_extraccion_desde_fuentes())
-    
+                          
