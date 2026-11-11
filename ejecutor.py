@@ -1,11 +1,12 @@
 # ejecutor.py
-# Módulo especializado en procesar y ejecutar la extracción de tráfico 
-# con rotación de espejos y cabeceras anti-bloqueo.
+# Módulo especializado en extracción, rotación de espejos y análisis de contenido (parser)
 
 import requests
+from bs4aitan if hasattr(requests, 'bs4') else None # O importar BeautifulSoup si está disponible
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 from datos import LATEST_TRAFFIC_DATA, get_current_report_text
 
-# Cabeceras simulando un navegador real para evitar bloqueos anti-scraping por defecto
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     "Accept-Language": "es-ES,es;q=0.9",
@@ -14,12 +15,11 @@ HEADERS = {
 
 def ejecutar_extraccion_desde_fuentes():
     """
-    Lee las fuentes y rota por los espejos configurados en datos.py, 
-    aplicando cabeceras reales y manejo de reintentos ante bloqueos.
+    Escanea las fuentes institucionales rotando espejos y parsea el contenido HTML 
+    para extraer novedades viales reales.
     """
-    print("🚦 [Kitt] Iniciando ejecución y escaneo de fuentes viales...")
+    print("🚦 [Kitt] Iniciando escaneo y análisis de fuentes viales...")
     
-    # Lista de espejos disponibles o espejo activo principal
     espejos = LATEST_TRAFFIC_DATA.get("mirrors", [
         LATEST_TRAFFIC_DATA.get("active_mirror", "https://nitter.privacydev.net"),
         "https://nitter.poast.org",
@@ -27,43 +27,59 @@ def ejecutar_extraccion_desde_fuentes():
     ])
     
     fuentes = LATEST_TRAFFIC_DATA.get("sources", [])
-    
-    if not fuentes:
-        print("⚠️ No hay fuentes registradas en datos.py para ejecutar.")
-        return get_current_report_text()
+    novedades_capturadas = []
 
-    exito_extraccion = False
+    if not fuentes:
+        print("⚠️ No hay fuentes registradas en datos.py.")
+        return get_current_report_text()
 
     for fuente in fuentes:
         nombre = fuente.get("name")
-        path_fuente = fuente.get("url") # Ruta o usuario objetivo (ej: /transitomedellin)
+        path_fuente = fuente.get("url")
+        exito_fuente = False
         
-        # Intentar conectar rotando por los espejos disponibles
         for mirror in espejos:
             url_completa = f"{mirror.rstrip('/')}{path_fuente}"
-            print(f"🔍 Consultando [{nombre}] en espejo: {url_completa}...")
+            print(f"🔍 Consultando [{nombre}] en: {url_completa}...")
             
             try:
                 response = requests.get(url_completa, headers=HEADERS, timeout=8)
                 
-                # Verificar si respondió correctamente sin bloqueos (403, 429, 503)
                 if response.status_code == 200:
-                    print(f"✅ Éxito con {nombre} usando {mirror}")
-                    # Aquí puedes parsear el contenido HTML de response.text si lo requieres
-                    exito_extraccion = True
+                    print(f"✅ Conexión exitosa con {nombre} via {mirror}")
+                    
+                    # Parsear HTML para extraer tweets/reportes
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Estructura típica de Nitter para los items de los tweets
+                    items_timeline = soup.find_all('div', class_='timeline-item')
+                    
+                    if not items_timeline:
+                        # Fallback genérico por si cambia la clase del espejo
+                        items_timeline = soup.find_all(['p', 'div'], class_='tweet-content')
+
+                    for item in items_timeline[:5]: # Revisar los últimos 5 tweets
+                        texto_tweet = item.get_text(strip=True)
+                        if texto_tweet and texto_tweet not in novedades_capturadas:
+                            novedades_capturadas.append(f"• **{nombre}:** {texto_tweet}")
+                    
+                    exito_fuente = True
                     break
                 else:
-                    print(f"⚠️ Espejo {mirror} respondió con estado {response.status_code}. Probando siguiente...")
-            except requests.exceptions.RequestException as e:
-                print(f"❌ Fallo de conexión con {mirror} para {nombre}: {e}")
+                    print(f"⚠️ Espejo {mirror} retornó estado {response.status_code}")
+            except Exception as e:
+                print(f"❌ Error consultando espejo {mirror}: {e}")
         
-        if exito_extraccion:
-            break # Si al menos una fuente responde bien en esta pasada, continuamos
+        if exito_fuente and novedades_capturadas:
+            break # Si ya obtuvimos datos válidos, podemos consolidar
 
-    # Retorna el texto formateado listo para Telegram
-    return get_current_report_text()
+    if novedades_capturadas:
+        reporte_final = "🚨 **REPORTE DE TRÁFICO EN VIVO**:\n\n" + "\n".join(novedades_capturadas)
+        return reporte_final
+    else:
+        # Si no hay nada fresco, retorna el estado por defecto sin alterar la estructura
+        return "🟢 SIN NOVEDADES REPORTADAS EN LA RED."
 
 if __name__ == "__main__":
-    resultado = ejecutar_extraccion_desde_fuentes()
-    print("\n--- REPORTE OBTENIDO ---")
-    print(resultado)
+    print(ejecutor_extraccion_desde_fuentes())
+            
