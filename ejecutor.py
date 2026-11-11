@@ -4,6 +4,7 @@
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -12,15 +13,14 @@ HEADERS = {
 }
 
 def obtener_hora_oficial():
-    """Obtiene la hora oficial de la zona horaria local con respaldo del sistema"""
+    """Obtiene la hora exacta de Colombia utilizando la zona horaria oficial"""
     try:
-        response = requests.get("http://worldtimeapi.org/api/timezone/America/Bogota", timeout=2)
-        if response.status_code == 200:
-            data = response.json()
-            return datetime.fromisoformat(data['datetime']).strftime("%H:%M COL")
+        # Zona horaria fija para Colombia sin depender de APIs externas
+        zona_colombia = ZoneInfo("America/Bogota")
+        return datetime.now(zona_colombia).strftime("%H:%M COL")
     except Exception:
-        pass
-    return datetime.now().strftime("%H:%M COL")
+        # Respaldo por si el entorno no soporta zoneinfo
+        return datetime.now().strftime("%H:%M COL")
 
 def ejecutar_extraccion_desde_fuentes():
     """
@@ -74,4 +74,4 @@ def ejecutar_extraccion_desde_fuentes():
 
 if __name__ == "__main__":
     print(ejecutor_extraccion_desde_fuentes())
-    
+                
