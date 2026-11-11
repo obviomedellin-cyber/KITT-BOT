@@ -3,7 +3,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -12,19 +12,24 @@ HEADERS = {
 }
 
 def obtener_hora_oficial():
-    """Calcula la hora local exacta de Colombia de forma limpia y segura"""
+    """
+    Calcula la hora legal de Colombia (UTC-5) de forma nativa e infalible,
+    sin depender de APIs externas ni de la base de datos de zonas del sistema operativo.
+    """
     try:
-        # Usamos el desfase directo de 5 horas sobre la hora local del servidor
-        # Esto evita por completo el uso de funciones obsoletas o bloqueos de despliegue
-        hora_local = datetime.now() - timedelta(hours=5)
-        return hora_local.strftime("%H:%M COL")
+        # Obtenemos la hora UTC actual de forma moderna y compatible
+        utc_now = datetime.now(timezone.utc).replace(tzinfo=None)
+        colombia_time = utc_now - timedelta(hours=5)
+        return colombia_time.strftime("%H:%M COL")
     except Exception:
-        return datetime.now().strftime("%H:%M COL")
+        # Respaldo matemático local directo
+        colombia_time = datetime.now() - timedelta(hours=5)
+        return colombia_time.strftime("%H:%M COL")
 
 def ejecutar_extraccion_desde_fuentes():
     """
     Ejecuta el escaneo de fuentes en vivo y aplica el respaldo consolidado 
-    del Valle de Aburrá garantizando la hora local exacta de Colombia.
+    del Valle de Aburrá garantizando la hora legal exacta de Colombia.
     """
     print("🚦 [Kitt] Ejecutando escaneo y consolidación de tráfico vial...")
     hora_actual = obtener_hora_oficial()
@@ -73,4 +78,4 @@ def ejecutar_extraccion_desde_fuentes():
 
 if __name__ == "__main__":
     print(ejecutor_extraccion_desde_fuentes())
-                          
+            
