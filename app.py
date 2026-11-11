@@ -69,18 +69,15 @@ async def p_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # INICIALIZACIÓN DEL BOT
 # ----------------------------------------------------
 def main():
-    # Construcción de la aplicación de Telegram usando el método estándar y limpio
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-    
-    # Registro del comando /p
     application.add_handler(CommandHandler("p", p_command))
     
-    # Iniciar el bot de forma nativa sin conflictos de Updater
     logger.info("Iniciando Kitt Bot en modo polling...")
-    application.run_polling()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         logger.error(f"Error crítico al iniciar el bot: {e}")
+    
