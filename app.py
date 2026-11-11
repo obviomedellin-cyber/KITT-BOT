@@ -1,7 +1,6 @@
 import os
 import logging
 import requests
-from datetime import datetime
 from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
@@ -14,8 +13,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Parámetros de entorno con token integrado
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "907250165:AAEllv7cGOfKQXhX...")
-TARGET_CHAT_ID = os.getenv("TARGET_CHAT_ID", "")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA")
 PORT = int(os.environ.get("PORT", 10000))
 
 # Importación segura de la base de datos externa (no bloqueante)
@@ -68,25 +66,21 @@ async def p_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(user_message)
 
 # ----------------------------------------------------
-# INICIALIZACIÓN DEL BOT Y FLASK
+# INICIALIZACIÓN DEL BOT
 # ----------------------------------------------------
 def main():
-    # Construcción de la aplicación de Telegram
+    # Construcción de la aplicación de Telegram usando el método estándar y limpio
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
     # Registro del comando /p
     application.add_handler(CommandHandler("p", p_command))
     
-    # Iniciar el bot usando run_polling (compatible con versiones modernas sin errores de atributos)
-    logger.info("Iniciando polling de Kitt Bot...")
+    # Iniciar el bot de forma nativa sin conflictos de Updater
+    logger.info("Iniciando Kitt Bot en modo polling...")
     application.run_polling()
 
 if __name__ == "__main__":
-    # Como run_polling es bloqueante para el hilo principal de Telegram, 
-    # en Render se suele priorizar el bot o correr Flask en background. 
-    # Para mantenerlo seguro y funcional, ejecutamos main() directamente:
     try:
         main()
     except Exception as e:
         logger.error(f"Error crítico al iniciar el bot: {e}")
-        
