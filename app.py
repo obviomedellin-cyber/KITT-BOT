@@ -13,7 +13,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Parámetros de entorno con tu token integrado
+# Parámetros de entorno con token integrado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA")
 TARGET_CHAT_ID = os.getenv("TARGET_CHAT_ID", "")
 PORT = int(os.environ.get("PORT", 10000))
@@ -131,10 +131,17 @@ def main():
     job_queue = app.job_queue
     job_queue.run_repeating(automated_big_data_sweep, interval=60, first=10)
 
-    logger.info("Kitt inicializado correctamente con rotación de espejos anti-429.")
-    
-    app.run_polling()
+    logger.info("Kitt inicializado correctamente. Iniciando servidor Flask y Bot en paralelo.")
+
+    # Iniciar Flask en segundo plano para cumplir con el puerto de Render
+    import threading
+    flask_thread = threading.Thread(target=lambda: app_flask.run(host="0.0.0.0", port=PORT, debug=False, use_reloader=False))
+    flask_thread.daemon = True
+    flask_thread.start()
+
+    # Ejecutar el bot mediante polling nativo
+    app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
     main()
-    
+            
