@@ -3,7 +3,7 @@
 
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
+from datetime import datetime, timedelta
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -12,36 +12,18 @@ HEADERS = {
 }
 
 def obtener_hora_oficial():
-    """Consulta directamente la hora legal oficial de Colombia mediante API web"""
+    """Calcula con precisión matemática la hora de Colombia restando 5 horas exactas al reloj UTC"""
     try:
-        response = requests.get("http://worldtimeapi.org/api/timezone/America/Bogota", timeout=3)
-        if response.status_code == 200:
-            data = response.json()
-            # Extrae la fecha y hora ISO del JSON oficial
-            dt_str = data.get('datetime', '')
-            if dt_str:
-                dt_obj = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
-                return dt_obj.strftime("%H:%M COL")
+        # Obtenemos la hora UTC actual del servidor y le restamos exactamente 5 horas (Colombia UTC-5)
+        hora_colombia = datetime.utcnow() - timedelta(hours=5)
+        return hora_colombia.strftime("%H:%M COL")
     except Exception:
-        pass
-    
-    # Respaldo alternativo consultando otra API de hora si la primera falla
-    try:
-        res = requests.get("https://timeapi.io/api/Time/current/zone?timeZone=America/Bogota", timeout=3)
-        if res.status_code == 200:
-            d = res.json()
-            hora = f"{d.get('hour', '00'):02d}:{d.get('minute', '00'):02d}"
-            return f"{hora} COL"
-    except Exception:
-        pass
-
-    # Si todo falla, devolvemos un marcador basado en la hora local del sistema
-    return datetime.now().strftime("%H:%M COL")
+        return datetime.now().strftime("%H:%M COL")
 
 def ejecutar_extraccion_desde_fuentes():
     """
     Ejecuta el escaneo de fuentes en vivo y aplica el respaldo consolidado 
-    del Valle de Aburrá garantizando hora legal y variación dinámica.
+    del Valle de Aburrá garantizando la hora local exacta de Colombia.
     """
     print("🚦 [Kitt] Ejecutando escaneo y consolidación de tráfico vial...")
     hora_actual = obtener_hora_oficial()
@@ -73,7 +55,7 @@ def ejecutar_extraccion_desde_fuentes():
         except Exception:
             continue
 
-    # Si hay novedades en vivo, las formateamos; si no, entregamos el respaldo oficial con sello horario legal
+    # Si hay novedades en vivo, las formateamos; si no, entregamos el respaldo oficial con hora precisa
     if novedades_capturadas:
         reporte_final = f"🚨 **REPORTE DE TRÁFICO EN VIVO ({hora_actual})**:\n\n"
         for nov in novedades_capturadas[:3]:
