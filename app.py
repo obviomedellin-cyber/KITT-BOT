@@ -26,13 +26,11 @@ except ImportError:
 app_flask = Flask(__name__)
 
 # ----------------------------------------------------
-# SISTEMA DE ROTACIÓN DE ESPEJOS
+# SISTEMA DE ESPEJOS (Instancias limpias y estables)
 # ----------------------------------------------------
 NITTER_INSTANCES = [
-    "https://nitter.catsarch.com",
     "https://nitter.privacydev.net",
-    "https://nitter.poast.org",
-    "https://nitter.woodland.coffee"
+    "https://nitter.poast.org"
 ]
 
 def fetch_from_mirrors(account_name: str):
@@ -42,14 +40,12 @@ def fetch_from_mirrors(account_name: str):
             response = requests.get(url, timeout=5)
             if response.status_code == 200:
                 return f"🟢 Red activa - Datos consultados desde {instance}"
-            elif response.status_code == 429:
-                continue
         except Exception:
             continue
     return "🟢 SIN NOVEDADES REPORTADAS EN LA RED."
 
 def send_telegram_message(chat_id, text):
-    """Envía mensajes directamente vía HTTP API de Telegram sin librerías complejas."""
+    """Envía mensajes directamente vía HTTP API de Telegram."""
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
     payload = {"chat_id": chat_id, "text": text}
     try:
@@ -61,9 +57,9 @@ def send_telegram_message(chat_id, text):
 def index():
     return "Kitt Bot está activo y operando en el Valle de Aburrá.", 200
 
-@app_flask.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
+@app_flask.route('/webhook', methods=["POST"])
 def telegram_webhook():
-    """Recibe los eventos de Telegram de forma limpia y directa."""
+    """Recibe los eventos directamente en la ruta /webhook que usa Telegram."""
     data = request.get_json(force=True)
     
     if "message" in data:
@@ -79,3 +75,4 @@ def telegram_webhook():
 
 if __name__ == "__main__":
     app_flask.run(host="0.0.0.0", port=PORT)
+        
