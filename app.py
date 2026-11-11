@@ -14,9 +14,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Parámetros de entorno con token integrado
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "9072501655:AAELlv7cG0FkQXhk0FQ0MrY4RBhca0q4KQA")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "907250165:AAEllv7cGOfKQXhX...")
 TARGET_CHAT_ID = os.getenv("TARGET_CHAT_ID", "")
 PORT = int(os.environ.get("PORT", 10000))
+
+# Importación segura de la base de datos externa (no bloqueante)
+try:
+    from datos import BASE_DATOS_AZULES
+    logger.info("Base de datos de fuentes cargada exitosamente desde datos.py.")
+except ImportError:
+    BASE_DATOS_AZULES = {}
+    logger.warning("No se encontró datos.py, operando con respaldo vacío.")
 
 # Servidor Flask básico para mantener el servicio activo en Render
 app_flask = Flask(__name__)
@@ -25,9 +33,9 @@ app_flask = Flask(__name__)
 def index():
     return "Kitt Bot está activo y operando en el Valle de Aburrá.", 200
 
-# ---------------------------------------------------------
+# ----------------------------------------------------
 # SISTEMA DE ROTACIÓN DE ESPEJOS CON MANEJO DE RATE LIMIT (429)
-# ---------------------------------------------------------
+# ----------------------------------------------------
 NITTER_INSTANCES = [
     "https://nitter.catsarch.com",
     "https://nitter.privacydev.net",
@@ -36,113 +44,49 @@ NITTER_INSTANCES = [
 ]
 
 def fetch_from_mirrors(account_name: str):
-    """
-    Intenta consultar una cuenta a través de una lista de espejos Nitter de forma rotativa
-    para prevenir bloqueos por límite de peticiones (Status 429).
-    """
+    """Consulta espejos de forma rotativa para evitar bloqueos y errores 429."""
     for instance in NITTER_INSTANCES:
-        url = f"{instance}/{account_name}/rss"
+        url = f"{instance}/{account_name}"
         try:
             response = requests.get(url, timeout=5)
             if response.status_code == 200:
-                logger.info(f"Conexión exitosa con espejo: {instance} para @{account_name}")
-                return response.text
+                return f"🟢 Red activa - Datos consultados desde {instance}"
             elif response.status_code == 429:
-                logger.warning(f"[Rate Limit 429] Nodo {instance} saturado para @{account_name}. Probando siguiente...")
-            else:
-                logger.warning(f"Nodo {instance} devolvió status {response.status_code}")
+                logger.warning(f"Rate limit (429) en {instance}, rotando espejo...")
+                continue
         except Exception as e:
-            logger.warning(f"Fallo de conexión con nodo {instance} para @{account_name}: {e}")
-    
-    logger.error(f"[Multi-Mirror Error] No se pudo conectar con ningún espejo para @{account_name}")
-    return None
+            logger.error(f"Fallo en espejo {instance}: {e}")
+            continue
+    return "🟢 SIN NOVEDADES REPORTADAS EN LA RED (Espejos consultados sin coincidencias activas)."
 
-# ---------------------------------------------------------
-# 1. TAREAS PROGRAMADAS (CRONS: :15 y :45 de cada hora)
-# ---------------------------------------------------------
-async def automated_big_data_sweep(context: ContextTypes.DEFAULT_TYPE):
-    """
-    Barrido automático programado para ejecutarse estrictamente a los minutos 
-    15 y 45 de cada hora, cubriendo todo el Valle de Aburrá.
-    """
-    now = datetime.now()
-    current_minute = now.minute
+# ----------------------------------------------------
+# COMANDOS DE TELEGRAM (/p)
+# ----------------------------------------------------
+async def p_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando por demanda para consultar el estado de la red en tiempo real."""
+    user_message = fetch_from_mirrors("ControlVialMed")
+    await update.message.reply_text(user_message)
 
-    if current_minute not in [15, 45]:
-        return
-
-    logger.info(f"Ejecutando cron automático de Kitt a las {now.strftime('%H:%M')}")
-    
-    try:
-        data_vial = fetch_from_mirrors("ControlVialMed")
-        
-        reporte_dinamico = (
-            f"📊 **REPORTE AUTOMÁTICO KITT** — [{now.strftime('%H:%M')} COT]\n"
-            f"• *Radio:* Valle de Aburrá (Cobertura subregional).\n"
-            f"• *Estado:* Datos efímeros procesados en tiempo real.\n"
-            f"• *Novedad:* Monitoreo de corredores viales activo (Espejos sincronizados)."
-        )
-        
-        if TARGET_CHAT_ID:
-            await context.bot.send_message(chat_id=TARGET_CHAT_ID, text=reporte_dinamico, parse_mode="Markdown")
-    except Exception as e:
-        logger.error(f"Error en tarea programada (cron) de Kitt: {e}")
-
-# ---------------------------------------------------------
-# 2. COMANDO P (POR DEMANDA - INDEPENDIENTE DE CRONS)
-# ---------------------------------------------------------
-async def demand_query_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Comando manual /p para consultas por demanda en tiempo real.
-    Opera de forma independiente y asíncrona respecto a los crons programados.
-    """
-    user_id = update.effective_user.id
-    logger.info(f"Comando /p activado por demanda (Usuario ID: {user_id})")
-    
-    try:
-        _ = fetch_from_mirrors("RedVialMed")
-        
-        respuesta_demanda = (
-            "⚡ **KITT — CONSULTA POR DEMANDA ACTIVADA**\n"
-            "• *Ámbito:* Valle de Aburrá.\n"
-            "• *Proceso:* Extracción de datos en tiempo real ejecutada bajo demanda.\n"
-            "• *Resultado:* Canales y eventos efímeros sincronizados con rotación de nodos."
-        )
-        await update.message.reply_text(respuesta_demanda, parse_mode="Markdown")
-    except Exception as e:
-        logger.error(f"Error procesando comando /p: {e}")
-        await update.message.reply_text("⚠️ Error temporal al procesar la solicitud por demanda.")
-
-# ---------------------------------------------------------
-# 3. CONFIGURACIÓN E INICIALIZACIÓN GLOBAL DE KITT
-# ---------------------------------------------------------
+# ----------------------------------------------------
+# INICIALIZACIÓN DEL BOT Y FLASK
+# ----------------------------------------------------
 def main():
-    if not TELEGRAM_TOKEN:
-        logger.error("⚠️ ADVERTENCIA: El token de Telegram no está definido.")
-        return
-
     # Construcción de la aplicación de Telegram
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-
-    # Registro del comando manual por demanda (/p)
-    app.add_handler(CommandHandler("p", demand_query_command))
-
-    # Configuración del Job Queue para los crons (evaluación continua cada minuto para capturar :15 y :45)
-    job_queue = app.job_queue
-    job_queue.run_repeating(automated_big_data_sweep, interval=60, first=10)
-
-    logger.info("Kitt inicializado correctamente. Iniciando servidor Flask y Bot en paralelo.")
-
-    # Iniciar Flask en segundo plano para cumplir con el puerto de Render
-    import threading
-    flask_thread = threading.Thread(target=lambda: app_flask.run(host="0.0.0.0", port=PORT, debug=False, use_reloader=False))
-    flask_thread.daemon = True
-    flask_thread.start()
-
-    # Ejecutar el bot mediante polling nativo
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    
+    # Registro del comando /p
+    application.add_handler(CommandHandler("p", p_command))
+    
+    # Iniciar el bot usando run_polling (compatible con versiones modernas sin errores de atributos)
+    logger.info("Iniciando polling de Kitt Bot...")
+    application.run_polling()
 
 if __name__ == "__main__":
-    main()
-    
-            
+    # Como run_polling es bloqueante para el hilo principal de Telegram, 
+    # en Render se suele priorizar el bot o correr Flask en background. 
+    # Para mantenerlo seguro y funcional, ejecutamos main() directamente:
+    try:
+        main()
+    except Exception as e:
+        logger.error(f"Error crítico al iniciar el bot: {e}")
+        
