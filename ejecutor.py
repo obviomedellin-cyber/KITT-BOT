@@ -74,4 +74,4 @@ def ejecutar_extraccion_desde_fuentes():
 
 if __name__ == "__main__":
     print(ejecutor_extraccion_desde_fuentes())
-        
+    
